@@ -12,11 +12,6 @@ import (
 	"github.com/zhigui-projects/fabric-connector/protoutil"
 )
 
-type PeerTx struct {
-	PeerName string `json:"name"`
-	PeerType int    `json:"type"`
-}
-
 type BlockInfo struct {
 	Number    uint64    `json:"number"`
 	TxCount   int       `json:"tx_count"`
