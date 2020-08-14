@@ -61,7 +61,7 @@ func loadOrgPeers(org string, ctxProvider contextAPI.ClientProvider) ([]fab.Peer
 	return peers, nil
 }
 
-func NewFabSdkProvider(appConfigPath, networkConfigPath string) (*FabSdkProvider, error) {
+func NewFabSdkProvider(appConfigPath string, configBytes []byte) (*FabSdkProvider, error) {
 	var appConfig AppConf
 	yamlFile, err := ioutil.ReadFile(appConfigPath)
 	if err != nil {
@@ -72,7 +72,7 @@ func NewFabSdkProvider(appConfigPath, networkConfigPath string) (*FabSdkProvider
 	}
 	appConf := appConfig.Conf
 
-	configOpt := config.FromFile(networkConfigPath)
+	configOpt := config.FromRaw(configBytes, "yaml")
 	sdk, err := fabsdk.New(configOpt)
 	if err != nil {
 		return nil, errors.Errorf("Failed to create new SDK: %s", err.Error())

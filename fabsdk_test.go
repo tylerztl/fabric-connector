@@ -26,8 +26,11 @@ var (
 )
 
 func init() {
-	var err error
-	provider, err = NewFabSdkProvider("./conf/app.yaml", "./conf/config.yaml")
+	configBytes, err := LoadConfigBytesFromFile("./conf/config.yaml")
+	if err != nil {
+		panic(err)
+	}
+	provider, err = NewFabSdkProvider("./conf/app.yaml", configBytes)
 	if err != nil {
 		panic(err)
 	}
