@@ -21,7 +21,7 @@ var (
 	testChannelId = "mychannel"
 	testCCId      = "mycc"
 	testCCVersion = "v0"
-	testCCPath    = "example_cc/go"
+	testCCPath    = "chaincode_example02/go"
 	testPolicy    = "AND ('Org1MSP.member','Org2MSP.member')"
 )
 

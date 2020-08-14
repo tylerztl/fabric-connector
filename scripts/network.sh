@@ -40,7 +40,6 @@ function dkrm(){
 }
 
 function networkUp() {
-	echo
 	echo Start the network
 	docker-compose up -d
 	echo
@@ -54,7 +53,6 @@ function networkUp() {
 }
 
 function networkDown() {
-	echo
     echo teardown the network and clean the containers and intermediate images
 	docker-compose down --volumes --remove-orphans
 	if [ "$MODE" != "restart" ]; then
