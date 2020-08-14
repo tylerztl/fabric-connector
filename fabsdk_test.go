@@ -19,7 +19,7 @@ import (
 var provider SdkProvider
 var (
 	testChannelId = "mychannel"
-	testCCId      = "example_cc"
+	testCCId      = "mycc"
 	testCCVersion = "v0"
 	testCCPath    = "example_cc/go"
 	testPolicy    = "AND ('Org1MSP.member','Org2MSP.member')"
