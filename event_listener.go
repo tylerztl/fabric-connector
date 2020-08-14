@@ -2,7 +2,6 @@ package fabric_connector
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 	"time"
 
@@ -12,17 +11,14 @@ import (
 	"github.com/zhigui-projects/fabric-connector/protoutil"
 )
 
-type BlockInfo struct {
-	Number    uint64    `json:"number"`
-	TxCount   int       `json:"tx_count"`
-	BlockHash string    `json:"block_hash"`
-	DateTime  time.Time `json:"datetime"`
-}
-
 type TransactionInfo struct {
-	Status   int       `json:"status"`
-	TxId     string    `json:"tx_id"`
-	DateTime time.Time `json:"datetime"`
+	Status      int
+	BlockNumber uint64
+	TxIndex     int
+	TxId        string
+	ChaincodeId string
+	Args        []string
+	DateTime    time.Time
 }
 
 type CallBackFunc func(interface{})
@@ -59,14 +55,20 @@ func updateBlock(block *cb.Block, callBack CallBackFunc) {
 		return
 	}
 
-	txLen := len(block.Data.Data)
-	var txTime time.Time
+	fmt.Printf("Seek block number:%d \n", block.Header.Number)
+
 	for i, envBytes := range block.Data.Data {
 		envelope, err := protoutil.GetEnvelopeFromBlock(envBytes)
 		if err != nil {
 			fmt.Println("Error GetEnvelopeFromBlock:", err)
 			break
 		}
+		cis, err := protoutil.GetCISFromEnvelopeMsg(envelope)
+		if err != nil {
+			fmt.Printf("error extracting cis from envelope: %s \n", err)
+			continue
+		}
+
 		payload, err := protoutil.UnmarshalPayload(envelope.Payload)
 		if err != nil {
 			fmt.Printf("error extracting payload from block: %s \n", err)
@@ -74,24 +76,33 @@ func updateBlock(block *cb.Block, callBack CallBackFunc) {
 		}
 		channelHeader, _ := protoutil.UnmarshalChannelHeader(payload.Header.ChannelHeader)
 		txTimestamp := channelHeader.Timestamp
-		txTime = time.Unix(txTimestamp.GetSeconds(), int64(txTimestamp.GetNanos()))
+		txTime := time.Unix(txTimestamp.GetSeconds(), int64(txTimestamp.GetNanos()))
 
 		validationCode := int(block.Metadata.Metadata[cb.BlockMetadataIndex_TRANSACTIONS_FILTER][i])
 
-		fmt.Printf("Seek block number:%d \n", block.Header.Number)
+		var ccId string
+		var args []string
+		if cis != nil && cis.ChaincodeSpec != nil {
+			if cis.ChaincodeSpec.ChaincodeId != nil {
+				ccId = cis.ChaincodeSpec.ChaincodeId.Name
+			}
+			if cis.ChaincodeSpec.Input != nil {
+				args = make([]string, len(cis.ChaincodeSpec.Input.Args))
+				for k, v := range cis.ChaincodeSpec.Input.Args {
+					args[k] = string(v)
+				}
+			}
+		}
 
 		txInfo := &TransactionInfo{
-			Status:   validationCode,
-			TxId:     channelHeader.TxId,
-			DateTime: txTime,
+			Status:      validationCode,
+			BlockNumber: block.Header.Number,
+			TxIndex:     i,
+			TxId:        channelHeader.TxId,
+			ChaincodeId: ccId,
+			Args:        args,
+			DateTime:    txTime,
 		}
 		callBack(txInfo)
-	}
-
-	_ = &BlockInfo{
-		Number:    block.Header.Number,
-		TxCount:   txLen,
-		BlockHash: hex.EncodeToString(block.Header.DataHash),
-		DateTime:  txTime,
 	}
 }

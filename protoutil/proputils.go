@@ -237,8 +237,27 @@ func GetActionFromEnvelopeMsg(env *common.Envelope) (*peer.ChaincodeAction, erro
 		return nil, errors.New("at least one TransactionAction required")
 	}
 
-	_, respPayload, err := GetPayloads(tx.Actions[0])
+	_, _, respPayload, err := GetPayloads(tx.Actions[0])
 	return respPayload, err
+}
+
+func GetCISFromEnvelopeMsg(env *common.Envelope) (*peer.ChaincodeInvocationSpec, error) {
+	payl, err := UnmarshalPayload(env.Payload)
+	if err != nil {
+		return nil, err
+	}
+
+	tx, err := UnmarshalTransaction(payl.Data)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(tx.Actions) == 0 {
+		return nil, errors.New("at least one TransactionAction required")
+	}
+
+	cis, _, _, err := GetPayloads(tx.Actions[0])
+	return cis, err
 }
 
 // CreateProposalFromCISAndTxid returns a proposal given a serialized identity

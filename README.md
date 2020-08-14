@@ -6,7 +6,7 @@
 ### Getting started
 Download fabric images
 ```
-./scripts/bootstrap.sh
+./scripts/bootstrap.sh -s -b
 ```
 Start the fabric network
 ```
