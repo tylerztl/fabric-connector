@@ -7,22 +7,10 @@
 
 cd artifacts/network
 
-# Parse commandline args
-while getopts "h?m:c:t:d:f:s:l:" opt; do
-  case "$opt" in
-    h|\?)
-      printHelp
-      exit 0
-    ;;
-    m)  MODE=$OPTARG
-    ;;
-  esac
-done
-
 # Print the usage message
 function printHelp () {
   echo "Usage: "
-  echo "      start_network.sh -m up|down|restart"
+  echo "      network.sh up|down|restart"
   echo "      - 'up' - bring up the network with docker-compose up"
   echo "      - 'down' - clear the network with docker-compose down"
   echo "      - 'restart' - restart the network"
@@ -56,6 +44,13 @@ function networkUp() {
 	echo Start the network
 	docker-compose up -d
 	echo
+
+	# now run the end to end script
+    docker exec cli scripts/script.sh
+    if [ $? -ne 0 ]; then
+        echo "ERROR !!!! Test failed"
+        exit 1
+    fi
 }
 
 function networkDown() {
@@ -74,6 +69,7 @@ function networkRestart() {
 	echo
 }
 
+MODE=$1
 #Create the network using docker compose
 if [ "${MODE}" == "up" ]; then
   networkUp
