@@ -7,7 +7,11 @@ SPDX-License-Identifier: Apache-2.0
 package fabric_connector
 
 import (
+	"context"
+	"fmt"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -76,4 +80,28 @@ func TestFabSdkProvider_QueryCC(t *testing.T) {
 	assert.NoError(t, err)
 
 	t.Logf("query chaincode resps, payload: %s", string(payload))
+}
+
+func EventHandler(data interface{}) {
+	info, _ := data.(*TransactionInfo)
+	fmt.Printf("EventHandler receive data: %v \n", info)
+}
+func TestFabSdkProvider_RegisterBlockEvent(t *testing.T) {
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		err := provider.RegisterBlockEvent(ctx, testChannelId, EventHandler)
+		assert.NoError(t, err)
+		wg.Done()
+	}()
+	go func() {
+		_, _, err := provider.InvokeCC(testChannelId, testCCId,
+			"move", [][]byte{[]byte("a"), []byte("b"), []byte("10")})
+		assert.NoError(t, err)
+		wg.Done()
+		time.Sleep(time.Second)
+		cancel()
+	}()
+	wg.Wait()
 }

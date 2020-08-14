@@ -10,11 +10,11 @@ Download fabric images
 ```
 Start the fabric network
 ```
-/scripts/start_network.sh -m up
+./scripts/start_network.sh -m up
 ```
 Clean the fabric network
 ```
-/scripts/start_network.sh -m down
+./scripts/start_network.sh -m down
 ```
 
 Running the test suite

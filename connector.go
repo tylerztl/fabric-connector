@@ -1,5 +1,7 @@
 package fabric_connector
 
+import "context"
+
 type SdkProvider interface {
 	ChannelOperator
 	ChainCodeAdminOperator
@@ -24,4 +26,5 @@ type ChainCodeUserOperator interface {
 }
 
 type EventCallBack interface {
+	RegisterBlockEvent(ctx context.Context, channelID string, callBack CallBackFunc) error
 }

@@ -1,10 +1,12 @@
 package fabric_connector
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/channel"
+	"github.com/hyperledger/fabric-sdk-go/pkg/client/event"
 	mspclient "github.com/hyperledger/fabric-sdk-go/pkg/client/msp"
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/resmgmt"
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/errors/retry"
@@ -13,6 +15,7 @@ import (
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/msp"
 	"github.com/hyperledger/fabric-sdk-go/pkg/core/config"
 	"github.com/hyperledger/fabric-sdk-go/pkg/fab/ccpackager/gopackager"
+	"github.com/hyperledger/fabric-sdk-go/pkg/fab/events/deliverclient/seek"
 	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk"
 	"github.com/hyperledger/fabric-sdk-go/third_party/github.com/hyperledger/fabric/common/cauthdsl"
 	"github.com/pkg/errors"
@@ -269,4 +272,19 @@ func (f *FabSdkProvider) QueryCC(channelID, ccID, function string, args [][]byte
 	fmt.Printf("Successfully query chaincode  ccName[%s] func[%v] payload[%v]\n",
 		ccID, function, string(response.Payload))
 	return response.Payload, nil
+}
+
+func (f *FabSdkProvider) RegisterBlockEvent(ctx context.Context, channelID string, callBack CallBackFunc) error {
+	orgInstance := f.Orgs[0]
+	//prepare context
+	userContext := f.Sdk.ChannelContext(channelID, fabsdk.WithUser(orgInstance.Config.User), fabsdk.WithOrg(orgInstance.Config.Name))
+	// create event client with block events
+	eventClient, err := event.New(userContext, event.WithBlockEvents(), event.WithSeekType(seek.Newest))
+	if err != nil {
+		return errors.Errorf("Failed to create new events client with block events: %s", err)
+	}
+	if err := registerBlockEvent(ctx, eventClient, callBack); err != nil {
+		return err
+	}
+	return nil
 }

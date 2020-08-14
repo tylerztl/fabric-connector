@@ -1,11 +1,37 @@
 package fabric_connector
 
 import (
-	"fmt"
-	"io/ioutil"
-
-	"gopkg.in/yaml.v2"
+	"go/build"
+	"path"
+	"path/filepath"
 )
+
+// ChannelConfigPath is the relative path to the generated channel artifacts directory
+var ChannelConfigPath = "artifacts/channel"
+
+// CryptoConfigPath is the relative path to the generated crypto config directory
+var CryptoConfigPath = "artifacts/channel/crypto-config"
+
+// Project is the Go project name relative to the Go Path
+var Project = "fabric-connector"
+
+// goPath returns the current GOPATH. If the system
+// has multiple GOPATHs then the first is used.
+func goPath() string {
+	gpDefault := build.Default.GOPATH
+	gps := filepath.SplitList(gpDefault)
+
+	return gps[0]
+}
+
+func GetChannelConfigPath(filename string) string {
+	return path.Join(goPath(), "src", Project, ChannelConfigPath, filename)
+}
+
+func GetDeployPath() string {
+	const ccPath = "artifacts/chaincode"
+	return path.Join(goPath(), "src", Project, ccPath)
+}
 
 type AppConf struct {
 	Conf Application `yaml:"application"`
@@ -28,17 +54,4 @@ type OrderderInfo struct {
 	Name     string `yaml:"name"`
 	Admin    string `yaml:"admin"`
 	Endpoint string `yaml:"endpoint"`
-}
-
-func GetAppConf() *AppConf {
-	var appConfig AppConf
-	confPath := GetConfigPath("app.yaml")
-	yamlFile, err := ioutil.ReadFile(confPath)
-	if err != nil {
-		panic(fmt.Errorf("yamlFile.Get err[%s]", err))
-	}
-	if err = yaml.Unmarshal(yamlFile, &appConfig); err != nil {
-		panic(fmt.Errorf("yamlFile.Unmarshal err[%s]", err))
-	}
-	return &appConfig
 }
