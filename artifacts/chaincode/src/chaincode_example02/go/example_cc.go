@@ -97,8 +97,8 @@ func (t *SimpleChaincode) move(stub shim.ChaincodeStubInterface, args []string) 
 	var X int          // Transaction value
 	var err error
 
-	if len(args) != 3 {
-		return shim.Error("Incorrect number of arguments. Expecting 4, function followed by 2 names and 1 value")
+	if len(args) != 4 {
+		return shim.Error("Incorrect number of arguments. Expecting 4")
 	}
 
 	A = args[0]
@@ -144,7 +144,12 @@ func (t *SimpleChaincode) move(stub shim.ChaincodeStubInterface, args []string) 
 		return shim.Error(err.Error())
 	}
 
-	return shim.Success(nil)
+	payload := []byte("{" + A + ":" + strconv.Itoa(Aval) + "," + B + ":" + strconv.Itoa(Bval) + "}")
+	if err := stub.SetEvent(args[3], payload); err != nil {
+		return shim.Error("Unable to set CC event. Aborting transaction ...")
+	}
+
+	return shim.Success(payload)
 }
 
 // Deletes an entity from state

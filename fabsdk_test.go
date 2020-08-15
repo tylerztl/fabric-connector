@@ -8,7 +8,6 @@ package fabric_connector
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"testing"
 	"time"
@@ -85,16 +84,15 @@ func TestFabSdkProvider_QueryCC(t *testing.T) {
 	t.Logf("query chaincode resps, payload: %s", string(payload))
 }
 
-func EventHandler(data interface{}) {
-	info, _ := data.(*TransactionInfo)
-	fmt.Printf("EventHandler receive data: %v \n", info)
-}
 func TestFabSdkProvider_RegisterBlockEvent(t *testing.T) {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
-		err := provider.RegisterBlockEvent(ctx, testChannelId, EventHandler)
+		err := provider.RegisterBlockEvent(ctx, testChannelId, func(data interface{}) {
+			info, _ := data.(*TransactionInfo)
+			t.Logf("EventHandler receive data: %v \n", info)
+		})
 		assert.NoError(t, err)
 		wg.Done()
 	}()

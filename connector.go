@@ -28,3 +28,9 @@ type ChainCodeUserOperator interface {
 type EventCallBack interface {
 	RegisterBlockEvent(ctx context.Context, channelID string, callBack CallBackFunc) error
 }
+
+type Gateway interface {
+	CallContract(channelID, ccID, function string, args []string) ([]byte, error)
+	RegisterContractEvent(ctx context.Context, channelID, ccID, eventID string, event ContractEvent) error
+	Close()
+}
