@@ -9,6 +9,7 @@ package fabric_connector
 import (
 	"context"
 	"math/rand"
+	"reflect"
 	"unsafe"
 
 	pb "github.com/hyperledger/fabric-protos-go/peer"
@@ -17,12 +18,11 @@ import (
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/ledger"
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/errors/retry"
 	contextApi "github.com/hyperledger/fabric-sdk-go/pkg/common/providers/context"
-	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/core"
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/fab"
 	"github.com/hyperledger/fabric-sdk-go/pkg/core/config"
 	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk"
-	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk/api"
 	"github.com/hyperledger/fabric-sdk-go/pkg/gateway"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -32,20 +32,12 @@ const (
 type ChaincodeEvent func(*fab.CCEvent)
 
 type GatewayService struct {
+	org       string
 	user      string
 	gw        *gateway.Gateway
+	sdk       *fabsdk.FabricSDK
 	networks  map[string]*gateway.Network
 	providers map[string]contextApi.ChannelProvider
-}
-
-// Gateway is the entry point to a Fabric network
-type FabGateway struct {
-	sdk        *fabsdk.FabricSDK
-	cfg        core.ConfigBackend
-	org        string
-	mspid      string
-	peers      []fab.PeerConfig
-	mspfactory api.MSPProviderFactory
 }
 
 // A Network object represents the set of peers in a Fabric network (channel).
@@ -58,17 +50,28 @@ type FabNetwork struct {
 }
 
 func NewGatewayService(configBytes []byte, user string) (*GatewayService, error) {
+	configOpt := config.FromRaw(configBytes, "yaml")
 	gw, err := gateway.Connect(
-		gateway.WithConfig(config.FromRaw(configBytes, "yaml")),
+		gateway.WithConfig(configOpt),
 		gateway.WithUser(user),
 	)
 	if err != nil {
 		return nil, err
 	}
 
+	orgVal := reflect.ValueOf(gw).Elem().FieldByName("org")
+	org := orgVal.String()
+
+	sdk, err := fabsdk.New(configOpt)
+	if err != nil {
+		return nil, errors.Errorf("Failed to create new SDK: %s", err.Error())
+	}
+
 	return &GatewayService{
-		gw:        gw,
+		org:       org,
 		user:      user,
+		gw:        gw,
+		sdk:       sdk,
 		networks:  make(map[string]*gateway.Network),
 		providers: make(map[string]contextApi.ChannelProvider),
 	}, nil
@@ -235,9 +238,7 @@ func (gs *GatewayService) GetChannelProvider(channelID string) (contextApi.Chann
 		return cp, nil
 	}
 
-	gw := (*FabGateway)(unsafe.Pointer(gs.gw))
-
-	channelProvider := gw.sdk.ChannelContext(channelID, fabsdk.WithUser(gs.user), fabsdk.WithOrg(gw.org))
+	channelProvider := gs.sdk.ChannelContext(channelID, fabsdk.WithUser(gs.user), fabsdk.WithOrg(gs.org))
 	gs.providers[channelID] = channelProvider
 	return channelProvider, nil
 }
