@@ -12,7 +12,7 @@ import (
 )
 
 type TransactionInfo struct {
-	Status      int
+	Status      int32
 	BlockNumber uint64
 	TxIndex     int
 	TxId        string
@@ -78,7 +78,7 @@ func updateBlock(block *cb.Block, callBack BlockEventWithTransaction) {
 		txTimestamp := channelHeader.Timestamp
 		txTime := time.Unix(txTimestamp.GetSeconds(), int64(txTimestamp.GetNanos()))
 
-		validationCode := int(block.Metadata.Metadata[cb.BlockMetadataIndex_TRANSACTIONS_FILTER][i])
+		validationCode := int32(block.Metadata.Metadata[cb.BlockMetadataIndex_TRANSACTIONS_FILTER][i])
 
 		var ccId string
 		var args []string
