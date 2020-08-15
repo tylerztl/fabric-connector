@@ -17,6 +17,7 @@ import (
 )
 
 var gw Gateway
+var eventID = RandStringBytes(16)
 
 func init() {
 	configBytes, err := LoadConfigBytesFromFile("./conf/config.yaml")
@@ -30,7 +31,7 @@ func init() {
 }
 
 func TestGatewayService_CallContract(t *testing.T) {
-	payload, err := gw.CallContract(testChannelId, testCCId, "move", []string{"a", "b", "10"})
+	payload, err := gw.CallContract(testChannelId, testCCId, "move", []string{"a", "b", "10", eventID})
 	assert.NoError(t, err)
 	t.Log(string(payload))
 
@@ -40,7 +41,6 @@ func TestGatewayService_CallContract(t *testing.T) {
 }
 
 func TestGatewayService_RegisterContractEvent(t *testing.T) {
-	eventID := RandStringBytes(16)
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 	ctx, cancel := context.WithCancel(context.Background())
