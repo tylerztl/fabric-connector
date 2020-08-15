@@ -1,6 +1,11 @@
 package fabric_connector
 
-import "context"
+import (
+	"context"
+
+	pb "github.com/hyperledger/fabric-protos-go/peer"
+	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/fab"
+)
 
 type SdkProvider interface {
 	ChannelOperator
@@ -15,22 +20,26 @@ type ChannelOperator interface {
 }
 
 type ChainCodeAdminOperator interface {
-	InstallCC(ccID, ccVersion, ccPath string) error
-	InstantiateCC(channelID, ccID, ccVersion, ccPath, ccPolicy string, args [][]byte) (txID string, err error)
-	UpgradeCC(channelID, ccID, ccVersion, ccPath, ccPolicy string, args [][]byte) (txID string, err error)
+	InstallChainCode(ccID, ccVersion, ccPath string) error
+	InstantiateChainCode(channelID, ccID, ccVersion, ccPath, ccPolicy string, args [][]byte) (txID string, err error)
+	UpgradeChainCode(channelID, ccID, ccVersion, ccPath, ccPolicy string, args [][]byte) (txID string, err error)
 }
 
 type ChainCodeUserOperator interface {
-	InvokeCC(channelID, ccID, function string, args [][]byte) (payload []byte, txID string, err error)
-	QueryCC(channelID, ccID, function string, args [][]byte) (payload []byte, err error)
+	InvokeChainCode(channelID, ccID, function string, args [][]byte) (payload []byte, txID string, err error)
+	QueryChainCode(channelID, ccID, function string, args [][]byte) (payload []byte, err error)
+	QueryTransaction(channelID string, transactionID fab.TransactionID) (*pb.ProcessedTransaction, error)
 }
 
 type EventCallBack interface {
-	RegisterBlockEvent(ctx context.Context, channelID string, callBack CallBackFunc) error
+	RegisterBlockEvent(ctx context.Context, channelID string, event BlockEventWithTransaction) error
 }
 
 type Gateway interface {
-	CallContract(channelID, ccID, function string, args []string) ([]byte, error)
-	RegisterContractEvent(ctx context.Context, channelID, ccID, eventID string, event ContractEvent) error
+	ChainCodeUserOperator // unsafe
+	EventCallBack // unsafe
+	SubmitTransaction(channelID, ccID, function string, args []string) (payload []byte, err error)
+	EvaluateTransaction(channelID, ccID, function string, args []string) (payload []byte, err error)
+	RegisterChaincodeEvent(ctx context.Context, channelID, ccID, eventID string, event ChaincodeEvent) error
 	Close()
 }

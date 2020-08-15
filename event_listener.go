@@ -21,15 +21,15 @@ type TransactionInfo struct {
 	DateTime    time.Time
 }
 
-type CallBackFunc func(interface{})
+type BlockEventWithTransaction func(*TransactionInfo)
 
-func registerBlockEvent(ctx context.Context, eventClient *event.Client, callBack CallBackFunc) error {
+func registerBlockEvent(ctx context.Context, eventClient *event.Client, callBack BlockEventWithTransaction, skipFirst bool) error {
 	reg, eventch, err := eventClient.RegisterBlockEvent()
 	if err != nil {
 		return errors.Errorf("Error registering for block events: %s", err)
 	}
 	defer eventClient.Unregister(reg)
-	flag := true
+
 	for {
 		select {
 		case e, ok := <-eventch:
@@ -39,8 +39,8 @@ func registerBlockEvent(ctx context.Context, eventClient *event.Client, callBack
 			if e.Block == nil {
 				fmt.Println("Expecting block in block event but got nil")
 			}
-			if flag {
-				flag = false
+			if skipFirst {
+				skipFirst = false
 			} else {
 				go updateBlock(e.Block, callBack)
 			}
@@ -50,7 +50,7 @@ func registerBlockEvent(ctx context.Context, eventClient *event.Client, callBack
 	}
 }
 
-func updateBlock(block *cb.Block, callBack CallBackFunc) {
+func updateBlock(block *cb.Block, callBack BlockEventWithTransaction) {
 	if block.Header.Number == 0 {
 		return
 	}

@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	pb "github.com/hyperledger/fabric-protos-go/peer"
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/channel"
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/event"
+	"github.com/hyperledger/fabric-sdk-go/pkg/client/ledger"
 	mspclient "github.com/hyperledger/fabric-sdk-go/pkg/client/msp"
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/resmgmt"
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/errors/retry"
@@ -170,7 +172,7 @@ func (f *FabSdkProvider) JoinChannel(channelID string) error {
 	return nil
 }
 
-func (f *FabSdkProvider) InstallCC(ccID, ccVersion, ccPath string) error {
+func (f *FabSdkProvider) InstallChainCode(ccID, ccVersion, ccPath string) error {
 	ccPkg, err := gopackager.NewCCPackage(ccPath, GetDeployPath())
 	if err != nil {
 		return err
@@ -188,7 +190,7 @@ func (f *FabSdkProvider) InstallCC(ccID, ccVersion, ccPath string) error {
 	return err
 }
 
-func (f *FabSdkProvider) InstantiateCC(channelID, ccID, ccVersion, ccPath, ccPolicy string, args [][]byte) (string, error) {
+func (f *FabSdkProvider) InstantiateChainCode(channelID, ccID, ccVersion, ccPath, ccPolicy string, args [][]byte) (string, error) {
 	policy, err := cauthdsl.FromString(ccPolicy)
 	if err != nil {
 		return "", errors.Errorf("Failed parse cc policy[%s], err:%v", ccPolicy, err)
@@ -207,7 +209,7 @@ func (f *FabSdkProvider) InstantiateCC(channelID, ccID, ccVersion, ccPath, ccPol
 	return string(resp.TransactionID), nil
 }
 
-func (f *FabSdkProvider) UpgradeCC(channelID, ccID, ccVersion, ccPath, ccPolicy string, args [][]byte) (string, error) {
+func (f *FabSdkProvider) UpgradeChainCode(channelID, ccID, ccVersion, ccPath, ccPolicy string, args [][]byte) (string, error) {
 	policy, err := cauthdsl.FromString(ccPolicy)
 	if err != nil {
 		return "", errors.Errorf("Failed parse cc policy[%s], err:%v", ccPolicy, err)
@@ -226,7 +228,7 @@ func (f *FabSdkProvider) UpgradeCC(channelID, ccID, ccVersion, ccPath, ccPolicy 
 	return string(resp.TransactionID), nil
 }
 
-func (f *FabSdkProvider) InvokeCC(channelID, ccID, function string, args [][]byte) ([]byte, string, error) {
+func (f *FabSdkProvider) InvokeChainCode(channelID, ccID, function string, args [][]byte) ([]byte, string, error) {
 	//ledger.WithTargets(orgTestPeer0, orgTestPeer1)
 	orgInstance := f.Orgs[0]
 	//prepare context
@@ -252,7 +254,7 @@ func (f *FabSdkProvider) InvokeCC(channelID, ccID, function string, args [][]byt
 	return response.Payload, string(response.TransactionID), nil
 }
 
-func (f *FabSdkProvider) QueryCC(channelID, ccID, function string, args [][]byte) ([]byte, error) {
+func (f *FabSdkProvider) QueryChainCode(channelID, ccID, function string, args [][]byte) ([]byte, error) {
 	orgInstance := f.Orgs[0]
 
 	//prepare context
@@ -274,7 +276,21 @@ func (f *FabSdkProvider) QueryCC(channelID, ccID, function string, args [][]byte
 	return response.Payload, nil
 }
 
-func (f *FabSdkProvider) RegisterBlockEvent(ctx context.Context, channelID string, callBack CallBackFunc) error {
+func (f *FabSdkProvider) QueryTransaction(channelID string, transactionID fab.TransactionID) (*pb.ProcessedTransaction, error) {
+	orgInstance := f.Orgs[0]
+
+	//prepare context
+	userContext := f.Sdk.ChannelContext(channelID, fabsdk.WithUser(orgInstance.Config.User), fabsdk.WithOrg(orgInstance.Config.Name))
+	//get channel client
+	ledgerClient, err := ledger.New(userContext)
+	if err != nil {
+		return nil, errors.Errorf("Failed to create new channel client:  %s", orgInstance.Config.Name)
+	}
+
+	return ledgerClient.QueryTransaction(transactionID)
+}
+
+func (f *FabSdkProvider) RegisterBlockEvent(ctx context.Context, channelID string, callBack BlockEventWithTransaction) error {
 	orgInstance := f.Orgs[0]
 	//prepare context
 	userContext := f.Sdk.ChannelContext(channelID, fabsdk.WithUser(orgInstance.Config.User), fabsdk.WithOrg(orgInstance.Config.Name))
@@ -283,7 +299,7 @@ func (f *FabSdkProvider) RegisterBlockEvent(ctx context.Context, channelID strin
 	if err != nil {
 		return errors.Errorf("Failed to create new events client with block events: %s", err)
 	}
-	if err := registerBlockEvent(ctx, eventClient, callBack); err != nil {
+	if err := registerBlockEvent(ctx, eventClient, callBack, true); err != nil {
 		return err
 	}
 	return nil
