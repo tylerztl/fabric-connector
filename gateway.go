@@ -10,11 +10,10 @@ import (
 	"context"
 	"math/rand"
 	"reflect"
-	"unsafe"
 
 	pb "github.com/hyperledger/fabric-protos-go/peer"
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/channel"
-	"github.com/hyperledger/fabric-sdk-go/pkg/client/event"
+	clientEvent "github.com/hyperledger/fabric-sdk-go/pkg/client/event"
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/ledger"
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/errors/retry"
 	contextApi "github.com/hyperledger/fabric-sdk-go/pkg/common/providers/context"
@@ -38,15 +37,6 @@ type GatewayService struct {
 	sdk       *fabsdk.FabricSDK
 	networks  map[string]*gateway.Network
 	providers map[string]contextApi.ChannelProvider
-}
-
-// A Network object represents the set of peers in a Fabric network (channel).
-// Applications should get a Network instance from a Gateway using the GetNetwork method.
-type FabNetwork struct {
-	name    string
-	gateway *Gateway
-	client  *channel.Client
-	event   *event.Client
 }
 
 func NewGatewayService(configBytes []byte, user string) (*GatewayService, error) {
@@ -79,11 +69,11 @@ func NewGatewayService(configBytes []byte, user string) (*GatewayService, error)
 
 func (gs *GatewayService) InvokeChainCode(channelID, ccID, function string, args [][]byte) ([]byte, string, error) {
 	// Get the network channel
-	network, err := gs.GetNetwork(channelID)
-	if err != nil {
-		return nil, "", err
-	}
-	newNetWork := (*FabNetwork)(unsafe.Pointer(network))
+	//network, err := gs.GetNetwork(channelID)
+	//if err != nil {
+	//	return nil, "", err
+	//}
+	//newNetWork := (*FabNetwork)(unsafe.Pointer(network))
 
 	//client := reflect.ValueOf(network).Elem().FieldByName("client")
 	//method := client.MethodByName("Execute")
@@ -96,7 +86,12 @@ func (gs *GatewayService) InvokeChainCode(channelID, ccID, function string, args
 	//	return nil, "", errors.New("invalid method type: Execute")
 	//}
 
-	response, err := newNetWork.client.Execute(
+	chClient, err := channel.New(gs.GetChannelProvider(channelID))
+	if err != nil {
+		return nil, "", err
+	}
+
+	response, err := chClient.Execute(
 		channel.Request{
 			ChaincodeID: ccID,
 			Fcn:         function,
@@ -110,14 +105,12 @@ func (gs *GatewayService) InvokeChainCode(channelID, ccID, function string, args
 }
 
 func (gs *GatewayService) QueryChainCode(channelID, ccID, function string, args [][]byte) ([]byte, error) {
-	// Get the network channel
-	network, err := gs.GetNetwork(channelID)
+	chClient, err := channel.New(gs.GetChannelProvider(channelID))
 	if err != nil {
 		return nil, err
 	}
-	newNetWork := (*FabNetwork)(unsafe.Pointer(network))
 
-	response, err := newNetWork.client.Query(channel.Request{ChaincodeID: ccID, Fcn: function, Args: args},
+	response, err := chClient.Query(channel.Request{ChaincodeID: ccID, Fcn: function, Args: args},
 		channel.WithRetry(retry.DefaultChannelOpts))
 	if err != nil {
 		return nil, err
@@ -162,12 +155,7 @@ func (gs *GatewayService) EvaluateTransaction(channelID, ccID, function string, 
 }
 
 func (gs *GatewayService) QueryTransaction(channelID string, transactionID fab.TransactionID) (*pb.ProcessedTransaction, error) {
-	cp, err := gs.GetChannelProvider(channelID)
-	if err != nil {
-		return nil, err
-	}
-
-	ledgerClient, err := ledger.New(cp)
+	ledgerClient, err := ledger.New(gs.GetChannelProvider(channelID))
 	if err != nil {
 		return nil, err
 	}
@@ -202,14 +190,11 @@ func (gs *GatewayService) RegisterChaincodeEvent(ctx context.Context, channelID,
 }
 
 func (gs *GatewayService) RegisterBlockEvent(ctx context.Context, channelID string, event BlockEventWithTransaction) error {
-	// Get the network channel
-	network, err := gs.GetNetwork(channelID)
+	cliEvent, err := clientEvent.New(gs.GetChannelProvider(channelID), clientEvent.WithBlockEvents())
 	if err != nil {
 		return err
 	}
-	newNetWork := (*FabNetwork)(unsafe.Pointer(network))
-
-	if err := registerBlockEvent(ctx, newNetWork.event, event, false); err != nil {
+	if err := registerBlockEvent(ctx, cliEvent, event, false); err != nil {
 		return err
 	}
 	return nil
@@ -233,14 +218,14 @@ func (gs *GatewayService) GetNetwork(channelID string) (*gateway.Network, error)
 	return network, nil
 }
 
-func (gs *GatewayService) GetChannelProvider(channelID string) (contextApi.ChannelProvider, error) {
+func (gs *GatewayService) GetChannelProvider(channelID string) contextApi.ChannelProvider {
 	if cp, ok := gs.providers[channelID]; ok {
-		return cp, nil
+		return cp
 	}
 
 	channelProvider := gs.sdk.ChannelContext(channelID, fabsdk.WithUser(gs.user), fabsdk.WithOrg(gs.org))
 	gs.providers[channelID] = channelProvider
-	return channelProvider, nil
+	return channelProvider
 }
 
 func RandStringBytes(n int) string {

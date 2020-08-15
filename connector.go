@@ -36,8 +36,8 @@ type EventCallBack interface {
 }
 
 type Gateway interface {
-	ChainCodeUserOperator // unsafe
-	EventCallBack // unsafe
+	ChainCodeUserOperator
+	EventCallBack
 	SubmitTransaction(channelID, ccID, function string, args []string) (payload []byte, err error)
 	EvaluateTransaction(channelID, ccID, function string, args []string) (payload []byte, err error)
 	RegisterChaincodeEvent(ctx context.Context, channelID, ccID, eventID string, event ChaincodeEvent) error
