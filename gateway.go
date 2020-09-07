@@ -8,8 +8,10 @@ package fabric_connector
 
 import (
 	"context"
+	"encoding/json"
 	"math/rand"
 	"reflect"
+	"unsafe"
 
 	pb "github.com/hyperledger/fabric-protos-go/peer"
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/channel"
@@ -21,6 +23,7 @@ import (
 	"github.com/hyperledger/fabric-sdk-go/pkg/core/config"
 	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk"
 	"github.com/hyperledger/fabric-sdk-go/pkg/gateway"
+	"github.com/hyperledger/fabric/bccsp/utils"
 	"github.com/pkg/errors"
 )
 
@@ -69,13 +72,18 @@ func NewGatewayService(configBytes []byte, user string) (*GatewayService, error)
 
 func (gs *GatewayService) InvokeChainCode(channelID, ccID, function string, args [][]byte) ([]byte, string, error) {
 	// Get the network channel
-	//network, err := gs.GetNetwork(channelID)
-	//if err != nil {
-	//	return nil, "", err
-	//}
+	network, err := gs.GetNetwork(channelID)
+	if err != nil {
+		return nil, "", err
+	}
 	//newNetWork := (*FabNetwork)(unsafe.Pointer(network))
 
-	//client := reflect.ValueOf(network).Elem().FieldByName("client")
+	client := reflect.ValueOf(network).Elem().FieldByName("client")
+
+	ptr := unsafe.Pointer(client.UnsafeAddr())
+
+	chClient := (**channel.Client)(ptr)
+
 	//method := client.MethodByName("Execute")
 	//if !method.IsValid() {
 	//	return nil, "", errors.New("MethodByName: Execute invalid")
@@ -86,12 +94,12 @@ func (gs *GatewayService) InvokeChainCode(channelID, ccID, function string, args
 	//	return nil, "", errors.New("invalid method type: Execute")
 	//}
 
-	chClient, err := channel.New(gs.GetChannelProvider(channelID))
-	if err != nil {
-		return nil, "", err
-	}
+	//chClient, err := channel.New(gs.GetChannelProvider(channelID))
+	//if err != nil {
+	//	return nil, "", err
+	//}
 
-	response, err := chClient.Execute(
+	response, err := (*chClient).Execute(
 		channel.Request{
 			ChaincodeID: ccID,
 			Fcn:         function,
@@ -133,7 +141,9 @@ func (gs *GatewayService) SubmitTransaction(channelID, ccID, function string, ar
 	if err != nil {
 		return nil, err
 	}
-	return result, nil
+	payload := &utils.ChaincodeResponsePayload{}
+	err = json.Unmarshal(result, payload)
+	return payload.Payload, err
 }
 
 func (gs *GatewayService) EvaluateTransaction(channelID, ccID, function string, args []string) ([]byte, error) {
@@ -151,7 +161,9 @@ func (gs *GatewayService) EvaluateTransaction(channelID, ccID, function string, 
 	if err != nil {
 		return nil, err
 	}
-	return result, nil
+	payload := &utils.ChaincodeResponsePayload{}
+	err = json.Unmarshal(result, payload)
+	return payload.Payload, err
 }
 
 func (gs *GatewayService) QueryTransaction(channelID string, transactionID fab.TransactionID) (*pb.ProcessedTransaction, error) {

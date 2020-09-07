@@ -30,7 +30,7 @@ func init() {
 }
 
 func TestGatewayService_CallContract(t *testing.T) {
-	payload, err := gw.SubmitTransaction(testChannelId, testCCId, "move", []string{"a", "b", "10", testEventID})
+	payload, err := gw.SubmitTransaction(testChannelId, testCCId, "invoke", []string{"a", "b", "10", testEventID})
 	assert.NoError(t, err)
 	t.Log(string(payload))
 
@@ -51,7 +51,7 @@ func TestGatewayService_RegisterContractEvent(t *testing.T) {
 		wg.Done()
 	}()
 	go func() {
-		_, err := gw.SubmitTransaction(testChannelId, testCCId, "move", []string{"a", "b", "10", testEventID})
+		_, err := gw.SubmitTransaction(testChannelId, testCCId, "invoke", []string{"a", "b", "10", testEventID})
 		assert.NoError(t, err)
 		wg.Done()
 		time.Sleep(time.Second)
@@ -62,7 +62,7 @@ func TestGatewayService_RegisterContractEvent(t *testing.T) {
 
 func TestGatewayService_InvokeCC(t *testing.T) {
 	payload, txId, err := gw.InvokeChainCode(testChannelId, testCCId,
-		"move", [][]byte{[]byte("a"), []byte("b"), []byte("10"), []byte(testEventID)})
+		"invoke", [][]byte{[]byte("a"), []byte("b"), []byte("10"), []byte(testEventID)})
 	assert.NoError(t, err)
 
 	t.Logf("invoke chaincode resps, txID: %s, payload: %s", txId, string(payload))
@@ -78,7 +78,7 @@ func TestGatewayService_QueryChainCode(t *testing.T) {
 
 func TestGatewayService_QueryTransaction(t *testing.T) {
 	_, txId, err := gw.InvokeChainCode(testChannelId, testCCId,
-		"move", [][]byte{[]byte("a"), []byte("b"), []byte("10"), []byte(testEventID)})
+		"invoke", [][]byte{[]byte("a"), []byte("b"), []byte("10"), []byte(testEventID)})
 	assert.NoError(t, err)
 
 	result, err := gw.QueryTransaction(testChannelId, fab.TransactionID(txId))
@@ -98,7 +98,7 @@ func TestGatewayService_RegisterBlockEvent(t *testing.T) {
 		wg.Done()
 	}()
 	go func() {
-		_, err := gw.SubmitTransaction(testChannelId, testCCId, "move", []string{"a", "b", "10", testEventID})
+		_, err := gw.SubmitTransaction(testChannelId, testCCId, "invoke", []string{"a", "b", "10", testEventID})
 		assert.NoError(t, err)
 		wg.Done()
 		time.Sleep(time.Second)

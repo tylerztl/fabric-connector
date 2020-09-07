@@ -11,12 +11,15 @@ Please review third_party pinning scripts and patches for more details.
 package protoutil
 
 import (
+	"encoding/json"
+
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-protos-go/common"
 	cb "github.com/hyperledger/fabric-protos-go/common"
 	"github.com/hyperledger/fabric-protos-go/msp"
 	"github.com/hyperledger/fabric-protos-go/peer"
 	pb "github.com/hyperledger/fabric-protos-go/peer"
+	"github.com/hyperledger/fabric/bccsp/utils"
 	"github.com/pkg/errors"
 )
 
@@ -129,8 +132,14 @@ func UnmarshalChaincodeEvents(eBytes []byte) (*peer.ChaincodeEvent, error) {
 
 // UnmarshalProposalResponsePayload unmarshals bytes to a ProposalResponsePayload
 func UnmarshalProposalResponsePayload(prpBytes []byte) (*peer.ProposalResponsePayload, error) {
+	// Add by ztl
+	vrfcrp := &utils.ChaincodeResponsePayload{}
+	if err := json.Unmarshal(prpBytes, vrfcrp); err != nil {
+		return nil, errors.Wrap(err, "error unmarshaling ChaincodeResponsePayload")
+	}
+
 	prp := &peer.ProposalResponsePayload{}
-	err := proto.Unmarshal(prpBytes, prp)
+	err := proto.Unmarshal(vrfcrp.Payload, prp)
 	return prp, errors.Wrap(err, "error unmarshaling ProposalResponsePayload")
 }
 
