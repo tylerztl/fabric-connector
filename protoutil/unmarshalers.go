@@ -19,7 +19,7 @@ import (
 	"github.com/hyperledger/fabric-protos-go/msp"
 	"github.com/hyperledger/fabric-protos-go/peer"
 	pb "github.com/hyperledger/fabric-protos-go/peer"
-	"github.com/hyperledger/fabric/bccsp/utils"
+	"github.com/hyperledger/fabric-sdk-go/pkg/util/vrf"
 	"github.com/pkg/errors"
 )
 
@@ -133,7 +133,7 @@ func UnmarshalChaincodeEvents(eBytes []byte) (*peer.ChaincodeEvent, error) {
 // UnmarshalProposalResponsePayload unmarshals bytes to a ProposalResponsePayload
 func UnmarshalProposalResponsePayload(prpBytes []byte) (*peer.ProposalResponsePayload, error) {
 	// Add by ztl
-	vrfcrp := &utils.ChaincodeResponsePayload{}
+	vrfcrp := &vrf.ChaincodeResponsePayload{}
 	if err := json.Unmarshal(prpBytes, vrfcrp); err != nil {
 		return nil, errors.Wrap(err, "error unmarshaling ChaincodeResponsePayload")
 	}

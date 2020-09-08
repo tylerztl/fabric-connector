@@ -23,7 +23,7 @@ import (
 	"github.com/hyperledger/fabric-sdk-go/pkg/core/config"
 	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk"
 	"github.com/hyperledger/fabric-sdk-go/pkg/gateway"
-	"github.com/hyperledger/fabric/bccsp/utils"
+	"github.com/hyperledger/fabric-sdk-go/pkg/util/vrf"
 	"github.com/pkg/errors"
 )
 
@@ -109,7 +109,9 @@ func (gs *GatewayService) InvokeChainCode(channelID, ccID, function string, args
 	if err != nil {
 		return nil, "", err
 	}
-	return response.Payload, string(response.TransactionID), nil
+	payload := &vrf.ChaincodeResponsePayload{}
+	err = json.Unmarshal(response.Payload, payload)
+	return payload.Payload, string(response.TransactionID), nil
 }
 
 func (gs *GatewayService) QueryChainCode(channelID, ccID, function string, args [][]byte) ([]byte, error) {
@@ -123,7 +125,9 @@ func (gs *GatewayService) QueryChainCode(channelID, ccID, function string, args 
 	if err != nil {
 		return nil, err
 	}
-	return response.Payload, nil
+	payload := &vrf.ChaincodeResponsePayload{}
+	err = json.Unmarshal(response.Payload, payload)
+	return payload.Payload, nil
 }
 
 func (gs *GatewayService) SubmitTransaction(channelID, ccID, function string, args []string) ([]byte, error) {
@@ -141,7 +145,7 @@ func (gs *GatewayService) SubmitTransaction(channelID, ccID, function string, ar
 	if err != nil {
 		return nil, err
 	}
-	payload := &utils.ChaincodeResponsePayload{}
+	payload := &vrf.ChaincodeResponsePayload{}
 	err = json.Unmarshal(result, payload)
 	return payload.Payload, err
 }
@@ -161,7 +165,7 @@ func (gs *GatewayService) EvaluateTransaction(channelID, ccID, function string, 
 	if err != nil {
 		return nil, err
 	}
-	payload := &utils.ChaincodeResponsePayload{}
+	payload := &vrf.ChaincodeResponsePayload{}
 	err = json.Unmarshal(result, payload)
 	return payload.Payload, err
 }

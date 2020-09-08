@@ -21,3 +21,5 @@ require (
 	golang.org/x/tools v0.0.0-20200813231717-0a73ddcff9b8 // indirect
 	gopkg.in/yaml.v2 v2.3.0
 )
+
+replace github.com/hyperledger/fabric-sdk-go => github.com/zhigui-projects/fabric-sdk-go v1.0.0-beta3.0.20200908031154-2e395dda32ee
