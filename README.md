@@ -26,3 +26,14 @@ go test -test.run TestFabSdkProvider_InstantiateCC
 go test -test.run TestFabSdkProvider_InvokeCC
 go test -test.run TestFabSdkProvider_QueryCC
 ```
+
+### Testing on Terminal command line
+```
+go build -o fabric-connector run/main.go
+```
+```
+./fabric-connector chaincode invoke -C mychannel -n mycc -c '{"Args":["move","a","b","10","test1"]}'
+```
+```
+./fabric-connector chaincode query -C mychannel -n mycc -c '{"Args":["query","a"]}'
+```

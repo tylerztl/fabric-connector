@@ -15,6 +15,8 @@ require (
 	github.com/hyperledger/fabric-sdk-go v1.0.0-beta2
 	github.com/op/go-logging v0.0.0-20160315200505-970db520ece7 // indirect
 	github.com/pkg/errors v0.8.1
+	github.com/spf13/cobra v0.0.2-0.20171109065643-2da4a54c5cee
+	github.com/spf13/pflag v1.0.1
 	github.com/stretchr/testify v1.6.0
 	github.com/sykesm/zap-logfmt v0.0.3 // indirect
 	go.uber.org/zap v1.15.0 // indirect
