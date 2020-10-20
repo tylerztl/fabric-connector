@@ -1,0 +1,7 @@
+---
+
+application:
+  org:
+    - name: Org1
+      admin: Admin
+      user: Admin
