@@ -7,6 +7,8 @@ import (
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/fab"
 )
 
+type ChaincodeEvent func(*fab.CCEvent)
+
 type SdkProvider interface {
 	ChannelOperator
 	ChainCodeAdminOperator
