@@ -27,45 +27,9 @@ client:
   logging:
     level: info
 
-    # Global configuration for peer, event service and orderer timeouts
-    # if this this section is omitted, then default values will be used (same values as below)
-    #  peer:
-    #    timeout:
-    #      connection: 10s
-    #      response: 180s
-    #      discovery:
-    #        # Expiry period for discovery service greylist filter
-    #        # The channel client will greylist peers that are found to be offline
-    #        # to prevent re-selecting them in subsequent retries.
-    #        # This interval will define how long a peer is greylisted
-    #        greylistExpiry: 10s
-    #  eventService:
-    # the below timeouts are commented out to use the default values that are found in
-    # "pkg/fab/endpointconfig.go"
-    # the client is free to override the default values by uncommenting and resetting
-    # the values as they see fit in their config file
-  #    timeout:
-  #      registrationResponse: 15s
-  #  orderer:
-  #    timeout:
-  #      connection: 15s
-  #      response: 15s
-  #  global:
-  #    timeout:
-  #      query: 180s
-  #      execute: 180s
-  #      resmgmt: 180s
-  #    cache:
-  #      connectionIdle: 30s
-  #      eventServiceIdle: 2m
-  #      channelConfig: 30m
-  #      channelMembership: 30s
-  #      discovery: 10s
-  #      selection: 10m
-
   # Root of the MSP directories with keys and certs.
   cryptoconfig:
-    path: ${GOPATH}/src/fabric-connector/artifacts/crypto-config
+    path: ${GOPATH}/src/fabric-connector/conf/crypto-config
 
   # Some SDKs support pluggable KV stores, the properties under "credentialStore"
   # are implementation specific
@@ -86,7 +50,8 @@ client:
       enabled: true
       default:
         provider: "SW"
-      hashAlgorithm: "SHA2"
+      hashAlgorithm: "SM3"
+      algorithm: "SM2"
       softVerify: true
       level: 256
 
@@ -101,7 +66,7 @@ client:
       cert:
         path:
 tls:
-  example:
+  guomi:
     com:
 #
 # [Optional]. But most apps would have this section so that channel objects can be constructed
@@ -124,7 +89,7 @@ channels:
     #[Required if _default peers not defined; Optional if _default peers defined].
     # list of peers from participating orgs
     peers:
-      peer0.org1.example.com:
+      peer0.peer.guomi.com:
         # [Optional]. will this peer be sent transaction proposals for endorsement? The peer must
         # have the chaincode installed. The app can also use this property to decide which peers
         # to send the chaincode install request. Default: true
@@ -144,78 +109,19 @@ channels:
         # Default: true
         eventSource: true
 
-      peer1.org1.example.com:
-        # [Optional]. will this peer be sent transaction proposals for endorsement? The peer must
-        # have the chaincode installed. The app can also use this property to decide which peers
-        # to send the chaincode install request. Default: true
-        endorsingPeer: true
-
-        # [Optional]. will this peer be sent query proposals? The peer must have the chaincode
-        # installed. The app can also use this property to decide which peers to send the
-        # chaincode install request. Default: true
-        chaincodeQuery: true
-
-        # [Optional]. will this peer be sent query proposals that do not require chaincodes, like
-        # queryBlock(), queryTransaction(), etc. Default: true
-        ledgerQuery: true
-
-        # [Optional]. will this peer be the target of the SDK's listener registration? All peers can
-        # produce events but the app typically only needs to connect to one to listen to events.
-        # Default: true
-        eventSource: true
-
-      peer0.org2.example.com:
-        # [Optional]. will this peer be sent transaction proposals for endorsement? The peer must
-        # have the chaincode installed. The app can also use this property to decide which peers
-        # to send the chaincode install request. Default: true
-        endorsingPeer: true
-
-        # [Optional]. will this peer be sent query proposals? The peer must have the chaincode
-        # installed. The app can also use this property to decide which peers to send the
-        # chaincode install request. Default: true
-        chaincodeQuery: true
-
-        # [Optional]. will this peer be sent query proposals that do not require chaincodes, like
-        # queryBlock(), queryTransaction(), etc. Default: true
-        ledgerQuery: true
-
-        # [Optional]. will this peer be the target of the SDK's listener registration? All peers can
-        # produce events but the app typically only needs to connect to one to listen to events.
-        # Default: true
-        eventSource: true
-
-      peer1.org2.example.com:
-        # [Optional]. will this peer be sent transaction proposals for endorsement? The peer must
-        # have the chaincode installed. The app can also use this property to decide which peers
-        # to send the chaincode install request. Default: true
-        endorsingPeer: true
-
-        # [Optional]. will this peer be sent query proposals? The peer must have the chaincode
-        # installed. The app can also use this property to decide which peers to send the
-        # chaincode install request. Default: true
-        chaincodeQuery: true
-
-        # [Optional]. will this peer be sent query proposals that do not require chaincodes, like
-        # queryBlock(), queryTransaction(), etc. Default: true
-        ledgerQuery: true
-
-        # [Optional]. will this peer be the target of the SDK's listener registration? All peers can
-        # produce events but the app typically only needs to connect to one to listen to events.
-        # Default: true
-        eventSource: true
 #
 # list of participating organizations in this network
 #
 organizations:
   Org1:
-    mspid: Org1MSP
+    mspid: peer-guomiMSP
 
     # This org's MSP store (absolute path or relative to client.cryptoconfig)
-    cryptoPath: peerOrganizations/org1.example.com/users/{username}@org1.example.com/msp
+    cryptoPath: peerOrganizations/peer.guomi.com/users/Admin@peer.guomi.com/msp
+    #    cryptoPath: peerOrganizations/org1.example.com/users/{username}@org1.example.com/msp
 
     peers:
-      - peer0.org1.example.com
-      - peer1.org1.example.com
+      - peer0.peer.guomi.com
 
     # [Optional]. Certificate Authorities issue certificates for identification purposes in a Fabric based
     # network. Typically certificates provisioning is done in a separate process outside of the
@@ -225,45 +131,20 @@ organizations:
 #    certificateAuthorities:
 #      - ca_peerOrg1
 
-  Org2:
-    mspid: Org2MSP
-
-    # This org's MSP store (absolute path or relative to client.cryptoconfig)
-    cryptoPath: peerOrganizations/org2.example.com/users/{username}@org2.example.com/msp
-
-    peers:
-      - peer0.org2.example.com
-      - peer1.org2.example.com
-
-    # [Optional]. Certificate Authorities issue certificates for identification purposes in a Fabric based
-    # network. Typically certificates provisioning is done in a separate process outside of the
-    # runtime network. Fabric-CA is a special certificate authority that provides a REST APIs for
-    # dynamic certificate management (enroll, revoke, re-enroll). The following section is only for
-    # Fabric-CA servers.
-#    certificateAuthorities:
-#      - ca_peerOrg2
-
-  Orderer:
-    # Membership Service Provider ID for this organization
-    mspID: OrdererMSP
-
-    # Needed to load users crypto keys and certs for this org (absolute path or relative to global crypto path, DEV mode)
-    cryptoPath: ordererOrganizations/example.com/users/{username}@example.com/msp
-
 #
 # List of orderers to send transaction and channel create/update requests to. For the time
 # being only one orderer is needed. If more than one is defined, which one get used by the
 # SDK is implementation specific. Consult each SDK's documentation for its handling of orderers.
 #
 orderers:
-  orderer.example.com:
+  orderer0.orderer.guomi.com:
     # [Optional] Default: Infer from hostname
-    url: orderer.example.com:7050
+    url: orderer0.orderer.guomi.com:7050
 
     # these are standard properties defined by the gRPC library
     # they will be passed in as-is to gRPC client constructor
     grpcOptions:
-      ssl-target-name-override: orderer.example.com
+      ssl-target-name-override: orderer0-orderer-guomi-com.orderer-guomi-com.svc.cluster.local
       # These parameters should be set in coordination with the keepalive policy on the server,
       # as incompatible settings can result in closing of connection.
       # When duration of the 'keep-alive-time' is set to 0 or less the keep alive client parameters are disabled
@@ -276,20 +157,20 @@ orderers:
 
     tlsCACerts:
       # Certificate location absolute path
-      path: ${GOPATH}/src/fabric-connector/artifacts/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem
+      path: ${GOPATH}/src/fabric-connector/conf/crypto-config/ordererOrganizations/orderer.guomi.com/tlsca/tlsca.example.com-cert.pem
 
 #
 # List of peers to send various requests to, including endorsement, query
 # and event listener registration.
 #
 peers:
-  peer0.org1.example.com:
+  peer0.peer.guomi.com:
     # this URL is used to send endorsement and query requests
     # [Optional] Default: Infer from hostname
-    url: peer0.org1.example.com:7051
+    url: peer0.peer.guomi.com:7051
 
     grpcOptions:
-      ssl-target-name-override: peer0.org1.example.com
+      ssl-target-name-override: peer0-peer-guomi-com.peer-guomi-com.svc.cluster.local
       # These parameters should be set in coordination with the keepalive policy on the server,
       # as incompatible settings can result in closing of connection.
       # When duration of the 'keep-alive-time' is set to 0 or less the keep alive client parameters are disabled
@@ -302,117 +183,7 @@ peers:
 
     tlsCACerts:
       # Certificate location absolute path
-      path: ${GOPATH}/src/fabric-connector/artifacts/crypto-config/peerOrganizations/org1.example.com/tlsca/tlsca.org1.example.com-cert.pem
-
-  peer1.org1.example.com:
-    # this URL is used to send endorsement and query requests
-    # [Optional] Default: Infer from hostname
-    url: peer1.org1.example.com:8051
-
-    grpcOptions:
-      ssl-target-name-override: peer1.org1.example.com
-      # These parameters should be set in coordination with the keepalive policy on the server,
-      # as incompatible settings can result in closing of connection.
-      # When duration of the 'keep-alive-time' is set to 0 or less the keep alive client parameters are disabled
-      keep-alive-time: 0s
-      keep-alive-timeout: 20s
-      keep-alive-permit: false
-      fail-fast: false
-      # allow-insecure will be taken into consideration if address has no protocol defined, if true then grpc or else grpcs
-      allow-insecure: false
-
-    tlsCACerts:
-      # Certificate location absolute path
-      path: ${GOPATH}/src/fabric-connector/artifacts/crypto-config/peerOrganizations/org1.example.com/tlsca/tlsca.org1.example.com-cert.pem
-
-  peer0.org2.example.com:
-    # this URL is used to send endorsement and query requests
-    # [Optional] Default: Infer from hostname
-    url: peer0.org2.example.com:9051
-
-    grpcOptions:
-      ssl-target-name-override: peer0.org2.example.com
-      # These parameters should be set in coordination with the keepalive policy on the server,
-      # as incompatible settings can result in closing of connection.
-      # When duration of the 'keep-alive-time' is set to 0 or less the keep alive client parameters are disabled
-      keep-alive-time: 0s
-      keep-alive-timeout: 20s
-      keep-alive-permit: false
-      fail-fast: false
-      # allow-insecure will be taken into consideration if address has no protocol defined, if true then grpc or else grpcs
-      allow-insecure: false
-
-    tlsCACerts:
-      # Certificate location absolute path
-      path: ${GOPATH}/src/fabric-connector/artifacts/crypto-config/peerOrganizations/org2.example.com/tlsca/tlsca.org2.example.com-cert.pem
-
-  peer1.org2.example.com:
-    # this URL is used to send endorsement and query requests
-    # [Optional] Default: Infer from hostname
-    url: peer1.org2.example.com:10051
-
-    grpcOptions:
-      ssl-target-name-override: peer1.org2.example.com
-      # These parameters should be set in coordination with the keepalive policy on the server,
-      # as incompatible settings can result in closing of connection.
-      # When duration of the 'keep-alive-time' is set to 0 or less the keep alive client parameters are disabled
-      keep-alive-time: 0s
-      keep-alive-timeout: 20s
-      keep-alive-permit: false
-      fail-fast: false
-      # allow-insecure will be taken into consideration if address has no protocol defined, if true then grpc or else grpcs
-      allow-insecure: false
-
-    tlsCACerts:
-      # Certificate location absolute path
-      path: ${GOPATH}/src/fabric-connector/artifacts/crypto-config/peerOrganizations/org2.example.com/tlsca/tlsca.org2.example.com-cert.pem
-
-#
-# Fabric-CA is a special kind of Certificate Authority provided by Hyperledger Fabric which allows
-# certificate management to be done via REST APIs. Application may choose to use a standard
-# Certificate Authority instead of Fabric-CA, in which case this section would not be specified.
-#
-#certificateAuthorities:
-#  ca_peerOrg1:
-#    # [Optional] Default: Infer from hostname
-#    url: https://ca0:7054
-#    tlsCACerts:
-#      # Comma-Separated list of paths
-#      path: ${GOPATH}/src/fabric-connector/artifacts/crypto-config/peerOrganizations/org1.example.com/tlsca/tlsca.org1.example.com-cert.pem
-#      # Client key and cert for SSL handshake with Fabric CA
-#      client:
-#        key:
-#          path: ${GOPATH}/src/fabric-connector/artifacts/crypto-config/peerOrganizations/org1.example.com/users/User1@org1.example.com/tls/server.key
-#        cert:
-#          path: ${GOPATH}/src/fabric-connector/artifacts/crypto-config/peerOrganizations/org1.example.com/users/User1@org1.example.com/tls/server.crt
-#
-#    # Fabric-CA supports dynamic user enrollment via REST APIs. A "root" user, a.k.a registrar, is
-#    # needed to enroll and invoke new users.
-#    registrar:
-#      enrollId: admin
-#      enrollSecret: adminpw
-#    # [Optional] The optional name of the CA.
-#    caName: ca-org1
-#  ca_peerOrg2:
-#    # [Optional] Default: Infer from hostname
-#    url: https://ca1:8054
-#    tlsCACerts:
-#      # Comma-Separated list of paths
-#      path: ${GOPATH}/src/fabric-connector/artifacts/crypto-config/peerOrganizations/org2.example.com/tlsca/tlsca.org2.example.com-cert.pem
-#      # Client key and cert for SSL handshake with Fabric CA
-#      client:
-#        key:
-#          path: ${GOPATH}/src/fabric-connector/artifacts/crypto-config/peerOrganizations/org2.example.com/users/User1@org2.example.com/tls/server.key
-#        cert:
-#          path: ${GOPATH}/src/fabric-connector/artifacts/crypto-config/peerOrganizations/org2.example.com/users/User1@org2.example.com/tls/server.crt
-#
-#    # Fabric-CA supports dynamic user enrollment via REST APIs. A "root" user, a.k.a registrar, is
-#    # needed to enroll and invoke new users.
-#    registrar:
-#      enrollId: admin
-#      enrollSecret: adminpw
-#    # [Optional] The optional name of the CA.
-#    caName: ca-org2
+      path: ${GOPATH}/src/fabric-connector/conf/crypto-config/peerOrganizations/peer.guomi.com/users/Admin@peer.guomi.com/msp/tlscacerts/tlsca.org1.example.com-cert.pem
 
   # EntityMatchers enable substitution of network hostnames with static configurations
   # so that properties can be mapped. Regex can be used for this purpose
@@ -426,39 +197,20 @@ peers:
 #entityMatchers:
 entityMatchers:
   peer:
-    - pattern: (\w*)peer0.org1.example.com(\w*)
-      urlSubstitutionExp: localhost:7051
+    - pattern: (\w*)peer0.peer.guomi.com(\w*)
+      urlSubstitutionExp: localhost:30001
       eventUrlSubstitutionExp: localhost:7053
-      sslTargetOverrideUrlSubstitutionExp: peer0.org1.example.com
-      mappedHost: peer0.org1.example.com
-    - pattern: (\w*)peer1.org1.example.com(\w*)
-      urlSubstitutionExp: localhost:8051
-      eventUrlSubstitutionExp: localhost:8053
-      sslTargetOverrideUrlSubstitutionExp: peer1.org1.example.com
-      mappedHost: peer1.org1.example.com
-    - pattern: (\w*)peer0.org2.example.com(\w*)
-      urlSubstitutionExp: localhost:9051
-      eventUrlSubstitutionExp: localhost:9053
-      sslTargetOverrideUrlSubstitutionExp: peer0.org2.example.com
-      mappedHost: peer0.org2.example.com
-    - pattern: (\w*)peer1.org2.example.com(\w*)
-      urlSubstitutionExp: localhost:10051
-      eventUrlSubstitutionExp: localhost:10053
-      sslTargetOverrideUrlSubstitutionExp: peer1.org2.example.com
-      mappedHost: peer1.org2.example.com
+      sslTargetOverrideUrlSubstitutionExp: peer0-peer-guomi-com.peer-guomi-com.svc.cluster.local
+      mappedHost: peer0.peer.guomi.com
 
   orderer:
-    - pattern: (\w*)orderer.example.com(\w*)
-      urlSubstitutionExp: localhost:7050
-      sslTargetOverrideUrlSubstitutionExp: orderer.example.com
-      mappedHost: orderer.example.com
+    - pattern: (\w*)orderer0.orderer.guomi.com(\w*)
+      urlSubstitutionExp: localhost:30002
+      sslTargetOverrideUrlSubstitutionExp: orderer0-orderer-guomi-com.orderer-guomi-com.svc.cluster.local
+      mappedHost: orderer0.orderer.guomi.com
 
 #  certificateAuthorities:
 #    - pattern: (\w*)ca0(\w*)
 #      urlSubstitutionExp: http://ca0:7054
 #      sslTargetOverrideUrlSubstitutionExp: ca0
 #      mappedHost: ca0
-#    - pattern: (\w*)ca1(\w*)
-#      urlSubstitutionExp: http://ca1:8054
-#      sslTargetOverrideUrlSubstitutionExp: ca1
-#      mappedHost: ca1

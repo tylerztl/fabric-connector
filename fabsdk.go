@@ -236,7 +236,7 @@ func (f *FabSdkProvider) InvokeChainCode(channelID, ccID, function string, args 
 	//get channel client
 	chClient, err := channel.New(userContext)
 	if err != nil {
-		return nil, "", errors.Errorf("Failed to create new channel client:  %s", orgInstance.Config.Name)
+		return nil, "", errors.Errorf("Failed to create new channel client:  %s, err: %v", orgInstance.Config.Name, err)
 	}
 	// Synchronous transaction
 	response, err := chClient.Execute(
