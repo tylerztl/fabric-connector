@@ -9,7 +9,7 @@ require (
 	github.com/golang/protobuf v1.4.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.1.0 // indirect
 	github.com/hashicorp/go-version v1.2.1 // indirect
-	github.com/hyperledger/fabric v1.4.8
+	github.com/hyperledger/fabric v1.4.8 // indirect
 	github.com/hyperledger/fabric-amcl v0.0.0-20200424173818-327c9e2cf77a // indirect
 	github.com/hyperledger/fabric-protos-go v0.0.0-20191121202242-f5500d5e3e85
 	github.com/hyperledger/fabric-sdk-go v1.0.0-beta2
