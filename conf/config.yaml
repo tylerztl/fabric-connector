@@ -50,8 +50,8 @@ client:
       enabled: true
       default:
         provider: "SW"
-      hashAlgorithm: "SM3"
-      algorithm: "SM2"
+      hashAlgorithm: "SM3" # 非国密使用"SHA2"
+      algorithm: "SM2" # 可选的，只有在启用国密是需要配置，非国密不需要配置
       softVerify: true
       level: 256
 
@@ -199,7 +199,7 @@ entityMatchers:
   peer:
     - pattern: (\w*)peer0.peer.guomi.com(\w*)
       urlSubstitutionExp: localhost:30001
-      eventUrlSubstitutionExp: localhost:7053
+      eventUrlSubstitutionExp: localhost:7053 # 可忽略
       sslTargetOverrideUrlSubstitutionExp: peer0-peer-guomi-com.peer-guomi-com.svc.cluster.local
       mappedHost: peer0.peer.guomi.com
 
