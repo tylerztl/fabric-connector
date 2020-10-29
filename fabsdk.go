@@ -89,7 +89,7 @@ func NewFabSdkProvider(appConfigPath string, configBytes []byte) (*FabSdkProvide
 	for i, org := range appConf.OrgInfo {
 
 		//clientContext allows creation of transactions using the supplied identity as the credential.
-		adminContext := sdk.Context(fabsdk.WithUser(org.Admin), fabsdk.WithOrg(org.Name))
+		adminContext := sdk.Context(fabsdk.WithUser(org.User), fabsdk.WithOrg(org.Name))
 
 		mspClient, err := mspclient.New(sdk.Context(), mspclient.WithOrg(org.Name))
 		if err != nil {
@@ -262,7 +262,7 @@ func (f *FabSdkProvider) QueryChainCode(channelID, ccID, function string, args [
 	//get channel client
 	chClient, err := channel.New(userContext)
 	if err != nil {
-		return nil, errors.Errorf("Failed to create new channel client:  %s", orgInstance.Config.Name)
+		return nil, errors.Errorf("Failed to create new channel client:  %s, err: %v", orgInstance.Config.Name, err)
 	}
 
 	response, err := chClient.Query(channel.Request{ChaincodeID: ccID, Fcn: function, Args: args},
