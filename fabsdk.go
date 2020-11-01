@@ -236,7 +236,7 @@ func (f *FabSdkProvider) InvokeChainCode(channelID, ccID, function string, args 
 	//get channel client
 	chClient, err := channel.New(userContext)
 	if err != nil {
-		return nil, "", errors.Errorf("Failed to create new channel client:  %s", orgInstance.Config.Name)
+		return nil, "", errors.Errorf("Failed to create new channel client: %s, err: %v", orgInstance.Config.Name, err)
 	}
 	// Synchronous transaction
 	response, err := chClient.Execute(
@@ -262,7 +262,7 @@ func (f *FabSdkProvider) QueryChainCode(channelID, ccID, function string, args [
 	//get channel client
 	chClient, err := channel.New(userContext)
 	if err != nil {
-		return nil, errors.Errorf("Failed to create new channel client:  %s", orgInstance.Config.Name)
+		return nil, errors.Errorf("Failed to create new channel client: %s, err: %v", orgInstance.Config.Name, err)
 	}
 
 	response, err := chClient.Query(channel.Request{ChaincodeID: ccID, Fcn: function, Args: args},
@@ -284,7 +284,7 @@ func (f *FabSdkProvider) QueryTransaction(channelID string, transactionID fab.Tr
 	//get channel client
 	ledgerClient, err := ledger.New(userContext)
 	if err != nil {
-		return nil, errors.Errorf("Failed to create new channel client:  %s", orgInstance.Config.Name)
+		return nil, errors.Errorf("Failed to create new channel client: %s, err: %v", orgInstance.Config.Name, err)
 	}
 
 	return ledgerClient.QueryTransaction(transactionID)
