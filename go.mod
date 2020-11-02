@@ -4,7 +4,9 @@ go 1.14
 
 require (
 	github.com/Shopify/sarama v1.27.0 // indirect
+	github.com/adjust/rmq/v3 v3.0.0
 	github.com/fsouza/go-dockerclient v1.6.5 // indirect
+	github.com/go-redis/redis/v7 v7.4.0
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/protobuf v1.4.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.1.0 // indirect
@@ -24,7 +26,7 @@ require (
 	github.com/zhigui-projects/http v0.0.0 // indirect
 	go.uber.org/zap v1.15.0 // indirect
 	golang.org/x/tools v0.0.0-20200813231717-0a73ddcff9b8 // indirect
-	gopkg.in/yaml.v2 v2.2.2
+	gopkg.in/yaml.v2 v2.2.4
 )
 
 replace (

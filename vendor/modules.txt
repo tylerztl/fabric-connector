@@ -2,6 +2,9 @@
 github.com/Knetic/govaluate
 # github.com/Shopify/sarama v1.27.0
 ## explicit
+# github.com/adjust/rmq/v3 v3.0.0
+## explicit
+github.com/adjust/rmq/v3
 # github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973
 github.com/beorn7/perks/quantile
 # github.com/cloudflare/cfssl v0.0.0-20180223231731-4e2dcbde5004
@@ -34,6 +37,15 @@ github.com/go-kit/kit/metrics/statsd
 github.com/go-kit/kit/util/conn
 # github.com/go-logfmt/logfmt v0.4.0
 github.com/go-logfmt/logfmt
+# github.com/go-redis/redis/v7 v7.4.0
+## explicit
+github.com/go-redis/redis/v7
+github.com/go-redis/redis/v7/internal
+github.com/go-redis/redis/v7/internal/consistenthash
+github.com/go-redis/redis/v7/internal/hashtag
+github.com/go-redis/redis/v7/internal/pool
+github.com/go-redis/redis/v7/internal/proto
+github.com/go-redis/redis/v7/internal/util
 # github.com/gogo/protobuf v1.3.1
 ## explicit
 github.com/gogo/protobuf/proto
@@ -439,7 +451,7 @@ google.golang.org/protobuf/types/known/anypb
 google.golang.org/protobuf/types/known/durationpb
 google.golang.org/protobuf/types/known/emptypb
 google.golang.org/protobuf/types/known/timestamppb
-# gopkg.in/yaml.v2 v2.2.2
+# gopkg.in/yaml.v2 v2.2.4
 ## explicit
 gopkg.in/yaml.v2
 # gopkg.in/yaml.v3 v3.0.0-20200601152816-913338de1bd2
