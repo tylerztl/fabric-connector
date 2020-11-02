@@ -17,6 +17,10 @@ var (
 	chaincodeLang     string
 	chaincodeCtorJSON string
 	configPath        string
+	serverPort        string
+	redisAddr         string
+	redisPassword     string
+	consortiumID      string
 )
 
 var flags *pflag.FlagSet
@@ -46,7 +50,7 @@ func init() {
 func resetFlags() {
 	flags = &pflag.FlagSet{}
 
-	flags.StringVarP(&channelID, "channelID", "C", "",
+	flags.StringVarP(&channelID, "channelID", "C", "mychannel",
 		fmt.Sprint("The channel on which this command should be executed"))
 
 	flags.StringVarP(&chaincodeName, "name", "n", "",
@@ -60,6 +64,14 @@ func resetFlags() {
 
 	flags.StringVarP(&configPath, "path", "p", "./conf",
 		fmt.Sprintf("Path to config files"))
+
+	flags.StringVar(&serverPort, "port", "8080", "http server port")
+
+	flags.StringVar(&redisAddr, "redisAddr", "localhost:6379", "rsmq server address")
+
+	flags.StringVar(&redisPassword, "redisPassword", "", "rsmq server password")
+
+	flags.StringVar(&consortiumID, "consortiumID", "483e8a0e477a414e9923e2382880eb5a", "consortiumID for baas server")
 }
 
 func attachFlags(cmd *cobra.Command, names []string) {

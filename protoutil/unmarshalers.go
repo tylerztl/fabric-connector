@@ -15,6 +15,7 @@ import (
 	"github.com/hyperledger/fabric-protos-go/common"
 	cb "github.com/hyperledger/fabric-protos-go/common"
 	"github.com/hyperledger/fabric-protos-go/msp"
+	mspproto "github.com/hyperledger/fabric-protos-go/msp"
 	"github.com/hyperledger/fabric-protos-go/peer"
 	pb "github.com/hyperledger/fabric-protos-go/peer"
 	"github.com/pkg/errors"
@@ -210,4 +211,13 @@ func UnmarshalSignatureHeaderOrPanic(bytes []byte) *cb.SignatureHeader {
 		panic(err)
 	}
 	return sighdr
+}
+
+func Deserialize(raw []byte) (*mspproto.SerializedIdentity, error) {
+	sId := &mspproto.SerializedIdentity{}
+	err := proto.Unmarshal(raw, sId)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not deserialize a SerializedIdentity")
+	}
+	return sId, nil
 }

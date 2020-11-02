@@ -33,6 +33,8 @@ func ChaincodeCmd() *cobra.Command {
 }
 
 func main() {
+	mainCmd.AddCommand(cmdpkg.ServerCmd())
+
 	// Define command-line flags that are valid for all commands and
 	// subcommands.
 	mainCmd.AddCommand(ChaincodeCmd())

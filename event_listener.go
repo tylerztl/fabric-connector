@@ -2,7 +2,9 @@ package fabric_connector
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
+	"strings"
 	"time"
 
 	cb "github.com/hyperledger/fabric-protos-go/common"
@@ -11,17 +13,27 @@ import (
 	"github.com/zhigui-projects/fabric-connector/protoutil"
 )
 
-type TransactionInfo struct {
-	Status      int32
-	BlockNumber uint64
-	TxIndex     int
-	TxId        string
-	ChaincodeId string
-	Args        []string
-	DateTime    time.Time
+type BlockData struct {
+	BlockHeight  uint64    `json:"blockHeight"`
+	PreviousHash string    `json:"previousHash"`
+	DataHash     string    `json:"dataHash"`
+	TimeStamp    string    `json:"timestamp"`
+	TxList       []*TxData `json:"txList"`
 }
 
-type BlockEventWithTransaction func(*TransactionInfo)
+type TxData struct {
+	Id             string `json:"id"`
+	ChannelId      string `json:"channel_id"`
+	TimeStamp      string `json:"timestamp"`
+	ValidationCode int32  `json:"validationCode"`
+	ChaincodeType  int32  `json:"chaincode_type"`
+	ChaincodeName  string `json:"chaincode_name"`
+	ChainCodeInput string `json:"chain_code_input"`
+	Endorser       string `json:"endorser"`
+	EndorserId     string `json:"endorserId"`
+}
+
+type BlockEventWithTransaction func(*BlockData)
 
 func registerBlockEvent(ctx context.Context, eventClient *event.Client, callBack BlockEventWithTransaction, skipFirst bool) error {
 	reg, eventch, err := eventClient.RegisterBlockEvent()
@@ -57,13 +69,16 @@ func updateBlock(block *cb.Block, callBack BlockEventWithTransaction) {
 
 	fmt.Printf("Seek block number:%d \n", block.Header.Number)
 
+	txList := make([]*TxData, 0)
 	for i, envBytes := range block.Data.Data {
 		envelope, err := protoutil.GetEnvelopeFromBlock(envBytes)
 		if err != nil {
 			fmt.Println("Error GetEnvelopeFromBlock:", err)
 			break
 		}
-		cis, err := protoutil.GetCISFromEnvelopeMsg(envelope)
+
+		cis, cap, _, err := protoutil.GetActionFromEnvelopeMsg(envelope)
+		//cis, err := protoutil.GetCISFromEnvelopeMsg(envelope)
 		if err != nil {
 			fmt.Printf("error extracting cis from envelope: %s \n", err)
 			continue
@@ -94,15 +109,35 @@ func updateBlock(block *cb.Block, callBack BlockEventWithTransaction) {
 			}
 		}
 
-		txInfo := &TransactionInfo{
-			Status:      validationCode,
-			BlockNumber: block.Header.Number,
-			TxIndex:     i,
-			TxId:        channelHeader.TxId,
-			ChaincodeId: ccId,
-			Args:        args,
-			DateTime:    txTime,
+		tx := &TxData{
+			Id:             channelHeader.TxId,
+			ChannelId:      channelHeader.ChannelId,
+			TimeStamp:      txTime.String(),
+			ValidationCode: validationCode,
+			ChaincodeType:  int32(cis.ChaincodeSpec.Type),
+			ChaincodeName:  ccId,
+			ChainCodeInput: strings.Join(args, ","),
 		}
-		callBack(txInfo)
+		if len(cap.Action.Endorsements) > 0 {
+			si, err := protoutil.Deserialize(cap.Action.Endorsements[0].Endorser)
+			if err == nil {
+				tx.Endorser = si.Mspid
+				tx.EndorserId = string(si.IdBytes)
+			}
+		}
+
+		txList = append(txList, tx)
 	}
+
+	resBlock := &BlockData{
+		BlockHeight:  block.Header.Number,
+		PreviousHash: hex.EncodeToString(block.Header.PreviousHash),
+		DataHash:     hex.EncodeToString(block.Header.DataHash),
+		TxList:       txList,
+	}
+	if len(txList) > 0 {
+		resBlock.TimeStamp = txList[0].TimeStamp
+	}
+
+	callBack(resBlock)
 }

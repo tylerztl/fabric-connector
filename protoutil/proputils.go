@@ -219,26 +219,26 @@ func GetActionFromEnvelope(envBytes []byte) (*peer.ChaincodeAction, error) {
 	if err != nil {
 		return nil, err
 	}
-	return GetActionFromEnvelopeMsg(env)
+	_, _, res, err := GetActionFromEnvelopeMsg(env)
+	return res, err
 }
 
-func GetActionFromEnvelopeMsg(env *common.Envelope) (*peer.ChaincodeAction, error) {
+func GetActionFromEnvelopeMsg(env *common.Envelope) (*peer.ChaincodeInvocationSpec, *peer.ChaincodeActionPayload, *peer.ChaincodeAction, error) {
 	payl, err := UnmarshalPayload(env.Payload)
 	if err != nil {
-		return nil, err
+		return nil, nil, nil, err
 	}
 
 	tx, err := UnmarshalTransaction(payl.Data)
 	if err != nil {
-		return nil, err
+		return nil, nil, nil, err
 	}
 
 	if len(tx.Actions) == 0 {
-		return nil, errors.New("at least one TransactionAction required")
+		return nil, nil, nil, errors.New("at least one TransactionAction required")
 	}
 
-	_, _, respPayload, err := GetPayloads(tx.Actions[0])
-	return respPayload, err
+	return GetPayloads(tx.Actions[0])
 }
 
 func GetCISFromEnvelopeMsg(env *common.Envelope) (*peer.ChaincodeInvocationSpec, error) {
