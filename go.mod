@@ -8,8 +8,8 @@ require (
 	github.com/fsouza/go-dockerclient v1.6.5 // indirect
 	github.com/go-redis/redis/v7 v7.4.0
 	github.com/gogo/protobuf v1.3.1
-	github.com/golang/protobuf v1.4.1
-	github.com/grpc-ecosystem/go-grpc-middleware v1.1.0 // indirect
+	github.com/golang/protobuf v1.4.2
+	github.com/google/certificate-transparency-go v1.1.1 // indirect
 	github.com/hashicorp/go-version v1.2.1 // indirect
 	github.com/hyperledger/fabric v1.4.8 // indirect
 	github.com/hyperledger/fabric-amcl v0.0.0-20200424173818-327c9e2cf77a // indirect
@@ -17,8 +17,8 @@ require (
 	github.com/hyperledger/fabric-sdk-go v1.0.0-beta2
 	github.com/op/go-logging v0.0.0-20160315200505-970db520ece7 // indirect
 	github.com/pkg/errors v0.9.1
-	github.com/spf13/cobra v0.0.2-0.20171109065643-2da4a54c5cee
-	github.com/spf13/pflag v1.0.1
+	github.com/spf13/cobra v0.0.5
+	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.6.1
 	github.com/sykesm/zap-logfmt v0.0.3 // indirect
 	github.com/zhigui-projects/gm-crypto v0.0.0 // indirect
@@ -26,7 +26,7 @@ require (
 	github.com/zhigui-projects/http v0.0.0 // indirect
 	go.uber.org/zap v1.15.0 // indirect
 	golang.org/x/tools v0.0.0-20200813231717-0a73ddcff9b8 // indirect
-	gopkg.in/yaml.v2 v2.2.4
+	gopkg.in/yaml.v2 v2.2.6
 )
 
 replace (
