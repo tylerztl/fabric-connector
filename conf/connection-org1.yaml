@@ -7,14 +7,15 @@ client:
     timeout:
       peer:
         endorser: '300'
+#  cryptoconfig:
+#    path: ${GOPATH}/src/fabric-connector/artifacts/crypto-config
 organizations:
   Org1:
     mspid: Org1MSP
     peers:
     - peer0.org1.example.com
     - peer1.org1.example.com
-    certificateAuthorities:
-    - ca.org1.example.com
+#    cryptoPath: peerOrganizations/org1.example.com/users/{username}@org1.example.com/msp
 peers:
   peer0.org1.example.com:
     url: grpcs://localhost:7051
@@ -35,7 +36,7 @@ peers:
         AwIDSAAwRQIhAP3eW5E45YzDoRWCHlX9UwS/n/PLzswrnkEv5a1orl3TAiAWlLi8
         1dfINGjduePxiNqPidvSIvTesHjXmwGBp7aaWw==
         -----END CERTIFICATE-----
-        
+
     grpcOptions:
       ssl-target-name-override: peer0.org1.example.com
       hostnameOverride: peer0.org1.example.com
@@ -58,31 +59,7 @@ peers:
         AwIDSAAwRQIhAP3eW5E45YzDoRWCHlX9UwS/n/PLzswrnkEv5a1orl3TAiAWlLi8
         1dfINGjduePxiNqPidvSIvTesHjXmwGBp7aaWw==
         -----END CERTIFICATE-----
-        
+
     grpcOptions:
       ssl-target-name-override: peer1.org1.example.com
       hostnameOverride: peer1.org1.example.com
-certificateAuthorities:
-  ca.org1.example.com:
-    url: https://localhost:7054
-    caName: ca-org1
-    tlsCACerts:
-      pem: |
-        -----BEGIN CERTIFICATE-----
-        MIICUTCCAfigAwIBAgIRAM8Y2IC2xnxozE8u6tJQWDkwCgYIKoZIzj0EAwIwczEL
-        MAkGA1UEBhMCVVMxEzARBgNVBAgTCkNhbGlmb3JuaWExFjAUBgNVBAcTDVNhbiBG
-        cmFuY2lzY28xGTAXBgNVBAoTEG9yZzEuZXhhbXBsZS5jb20xHDAaBgNVBAMTE2Nh
-        Lm9yZzEuZXhhbXBsZS5jb20wHhcNMjAwODE0MDkzMDAwWhcNMzAwODEyMDkzMDAw
-        WjBzMQswCQYDVQQGEwJVUzETMBEGA1UECBMKQ2FsaWZvcm5pYTEWMBQGA1UEBxMN
-        U2FuIEZyYW5jaXNjbzEZMBcGA1UEChMQb3JnMS5leGFtcGxlLmNvbTEcMBoGA1UE
-        AxMTY2Eub3JnMS5leGFtcGxlLmNvbTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IA
-        BH2kCoJO7MygTaqi8AMx9NFqQl0Ha1SYrXRdmygBNiRDwfchytnsEBXeWDLquK+2
-        K3xVNpQFwpsV8JSeq5mmEBWjbTBrMA4GA1UdDwEB/wQEAwIBpjAdBgNVHSUEFjAU
-        BggrBgEFBQcDAgYIKwYBBQUHAwEwDwYDVR0TAQH/BAUwAwEB/zApBgNVHQ4EIgQg
-        j3tSZ6HjhPx2pXLl2tuDdkWIS521RuySW7Xfay3VFq4wCgYIKoZIzj0EAwIDRwAw
-        RAIgZAX/X30MWHxtwQmQnECkB9uO2YnMIZaxZZO3d0R3NpgCIF6whTHCvBQy08sh
-        iJFmA6aEXypjRL6GpRHiyfs9ul5p
-        -----END CERTIFICATE-----
-        
-    httpOptions:
-      verify: false

@@ -19,9 +19,11 @@ import (
 var gw Gateway
 
 func init() {
-	var err error
-	gw, err = NewGatewayService("./conf/connection-org1.yaml", "User1",
-		"./artifacts/crypto-config/peerOrganizations/org1.example.com/users/{username}@org1.example.com/msp", "Org1MSP")
+	configBytes, err := LoadConfigBytesFromFile("./conf/config.yaml")
+	if err != nil {
+		panic(err)
+	}
+	gw, err = NewGatewayService(configBytes, "User1")
 	if err != nil {
 		panic(err)
 	}
@@ -56,6 +58,32 @@ func TestGatewayService_RegisterContractEvent(t *testing.T) {
 		cancel()
 	}()
 	wg.Wait()
+}
+
+func TestGatewayService_InvokeCC(t *testing.T) {
+	payload, txId, err := gw.InvokeChainCode(testChannelId, testCCId,
+		"move", [][]byte{[]byte("a"), []byte("b"), []byte("10"), []byte(testEventID)})
+	assert.NoError(t, err)
+
+	t.Logf("invoke chaincode resps, txID: %s, payload: %s", txId, string(payload))
+}
+
+func TestGatewayService_QueryChainCode(t *testing.T) {
+	payload, err := gw.QueryChainCode(testChannelId, testCCId,
+		"query", [][]byte{[]byte("a")})
+	assert.NoError(t, err)
+
+	t.Logf("query chaincode resps, payload: %s", string(payload))
+}
+
+func TestGatewayService_QueryTransaction(t *testing.T) {
+	_, txId, err := gw.InvokeChainCode(testChannelId, testCCId,
+		"move", [][]byte{[]byte("a"), []byte("b"), []byte("10"), []byte(testEventID)})
+	assert.NoError(t, err)
+
+	result, err := gw.QueryTransaction(testChannelId, fab.TransactionID(txId))
+	assert.NoError(t, err)
+	t.Logf("QueryTransaction [%s]: %+v", txId, result)
 }
 
 func TestGatewayService_RegisterBlockEvent(t *testing.T) {

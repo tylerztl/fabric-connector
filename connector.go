@@ -36,7 +36,6 @@ type EventCallBack interface {
 }
 
 type Gateway interface {
-	ChainCodeUserOperator
 	EventCallBack
 	SubmitTransaction(channelID, ccID, function string, args []string) (payload []byte, err error)
 	EvaluateTransaction(channelID, ccID, function string, args []string) (payload []byte, err error)

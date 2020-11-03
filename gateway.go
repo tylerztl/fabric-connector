@@ -8,20 +8,16 @@ package fabric_connector
 
 import (
 	"context"
+	"errors"
+	"io/ioutil"
+	"log"
 	"math/rand"
-	"reflect"
+	"os"
+	"path/filepath"
 
-	pb "github.com/hyperledger/fabric-protos-go/peer"
-	"github.com/hyperledger/fabric-sdk-go/pkg/client/channel"
-	clientEvent "github.com/hyperledger/fabric-sdk-go/pkg/client/event"
-	"github.com/hyperledger/fabric-sdk-go/pkg/client/ledger"
-	"github.com/hyperledger/fabric-sdk-go/pkg/common/errors/retry"
-	contextApi "github.com/hyperledger/fabric-sdk-go/pkg/common/providers/context"
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/fab"
 	"github.com/hyperledger/fabric-sdk-go/pkg/core/config"
-	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk"
 	"github.com/hyperledger/fabric-sdk-go/pkg/gateway"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -31,91 +27,44 @@ const (
 type ChaincodeEvent func(*fab.CCEvent)
 
 type GatewayService struct {
-	org       string
-	user      string
-	gw        *gateway.Gateway
-	sdk       *fabsdk.FabricSDK
-	networks  map[string]*gateway.Network
-	providers map[string]contextApi.ChannelProvider
+	gw       *gateway.Gateway
+	networks map[string]*gateway.Network
 }
 
-func NewGatewayService(configBytes []byte, user string) (*GatewayService, error) {
-	configOpt := config.FromRaw(configBytes, "yaml")
+func NewGatewayService(configPath, userId string, mspOpts ...string) (*GatewayService, error) {
+	os.Setenv("DISCOVERY_AS_LOCALHOST", "true")
+	var identityOpt gateway.IdentityOption
+	if len(mspOpts) == 2 {
+		userMspPath, mspId := mspOpts[0], mspOpts[1]
+		wallet, err := gateway.NewFileSystemWallet("wallet")
+		if err != nil {
+			log.Print("Failed to create wallet: ", err)
+			os.Exit(1)
+		}
+		if !wallet.Exists(userId) {
+			err = populateWallet(userId, userMspPath, mspId, wallet)
+			if err != nil {
+				log.Print("Failed to put wallet contents: ", err)
+				os.Exit(1)
+			}
+		}
+		identityOpt = gateway.WithIdentity(wallet, userId)
+	} else {
+		identityOpt = gateway.WithUser(userId)
+	}
+
 	gw, err := gateway.Connect(
-		gateway.WithConfig(configOpt),
-		gateway.WithUser(user),
+		gateway.WithConfig(config.FromFile(configPath)),
+		identityOpt,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	orgVal := reflect.ValueOf(gw).Elem().FieldByName("org")
-	org := orgVal.String()
-
-	sdk, err := fabsdk.New(configOpt)
-	if err != nil {
-		return nil, errors.Errorf("Failed to create new SDK: %s", err.Error())
-	}
-
 	return &GatewayService{
-		org:       org,
-		user:      user,
-		gw:        gw,
-		sdk:       sdk,
-		networks:  make(map[string]*gateway.Network),
-		providers: make(map[string]contextApi.ChannelProvider),
+		gw:       gw,
+		networks: make(map[string]*gateway.Network),
 	}, nil
-}
-
-func (gs *GatewayService) InvokeChainCode(channelID, ccID, function string, args [][]byte) ([]byte, string, error) {
-	// Get the network channel
-	//network, err := gs.GetNetwork(channelID)
-	//if err != nil {
-	//	return nil, "", err
-	//}
-	//newNetWork := (*FabNetwork)(unsafe.Pointer(network))
-
-	//client := reflect.ValueOf(network).Elem().FieldByName("client")
-	//method := client.MethodByName("Execute")
-	//if !method.IsValid() {
-	//	return nil, "", errors.New("MethodByName: Execute invalid")
-	//}
-	//
-	//execute, ok := method.Interface().(func(request channel.Request, options ...channel.RequestOption) (channel.Response, error))
-	//if !ok {
-	//	return nil, "", errors.New("invalid method type: Execute")
-	//}
-
-	chClient, err := channel.New(gs.GetChannelProvider(channelID))
-	if err != nil {
-		return nil, "", err
-	}
-
-	response, err := chClient.Execute(
-		channel.Request{
-			ChaincodeID: ccID,
-			Fcn:         function,
-			Args:        args,
-		},
-		channel.WithRetry(retry.DefaultChannelOpts))
-	if err != nil {
-		return nil, "", err
-	}
-	return response.Payload, string(response.TransactionID), nil
-}
-
-func (gs *GatewayService) QueryChainCode(channelID, ccID, function string, args [][]byte) ([]byte, error) {
-	chClient, err := channel.New(gs.GetChannelProvider(channelID))
-	if err != nil {
-		return nil, err
-	}
-
-	response, err := chClient.Query(channel.Request{ChaincodeID: ccID, Fcn: function, Args: args},
-		channel.WithRetry(retry.DefaultChannelOpts))
-	if err != nil {
-		return nil, err
-	}
-	return response.Payload, nil
 }
 
 func (gs *GatewayService) SubmitTransaction(channelID, ccID, function string, args []string) ([]byte, error) {
@@ -136,6 +85,7 @@ func (gs *GatewayService) SubmitTransaction(channelID, ccID, function string, ar
 	return result, nil
 }
 
+// TxID可以通过合约返回值得到
 func (gs *GatewayService) EvaluateTransaction(channelID, ccID, function string, args []string) ([]byte, error) {
 	// Get the network channel
 	network, err := gs.GetNetwork(channelID)
@@ -152,15 +102,6 @@ func (gs *GatewayService) EvaluateTransaction(channelID, ccID, function string, 
 		return nil, err
 	}
 	return result, nil
-}
-
-func (gs *GatewayService) QueryTransaction(channelID string, transactionID fab.TransactionID) (*pb.ProcessedTransaction, error) {
-	ledgerClient, err := ledger.New(gs.GetChannelProvider(channelID))
-	if err != nil {
-		return nil, err
-	}
-
-	return ledgerClient.QueryTransaction(transactionID)
 }
 
 func (gs *GatewayService) RegisterChaincodeEvent(ctx context.Context, channelID, ccID, eventID string, event ChaincodeEvent) error {
@@ -190,14 +131,36 @@ func (gs *GatewayService) RegisterChaincodeEvent(ctx context.Context, channelID,
 }
 
 func (gs *GatewayService) RegisterBlockEvent(ctx context.Context, channelID string, event BlockEventWithTransaction) error {
-	cliEvent, err := clientEvent.New(gs.GetChannelProvider(channelID), clientEvent.WithBlockEvents())
+	network, err := gs.GetNetwork(channelID)
 	if err != nil {
 		return err
 	}
-	if err := registerBlockEvent(ctx, cliEvent, event, false); err != nil {
+
+	reg, notifier, err := network.RegisterBlockEvent()
+	if err != nil {
 		return err
 	}
-	return nil
+	defer network.Unregister(reg)
+
+	skipFirst := false
+	for {
+		select {
+		case e, ok := <-notifier:
+			if !ok {
+				log.Println("unexpected closed channel while waiting for block event")
+			}
+			if e.Block == nil {
+				log.Println("Expecting block in block event but got nil")
+			}
+			if skipFirst {
+				skipFirst = false
+			} else {
+				go updateBlock(e.Block, event)
+			}
+		case <-ctx.Done():
+			return nil
+		}
+	}
 }
 
 func (gs *GatewayService) Close() {
@@ -218,14 +181,42 @@ func (gs *GatewayService) GetNetwork(channelID string) (*gateway.Network, error)
 	return network, nil
 }
 
-func (gs *GatewayService) GetChannelProvider(channelID string) contextApi.ChannelProvider {
-	if cp, ok := gs.providers[channelID]; ok {
-		return cp
+func populateWallet(userId, mspPath, mspId string, wallet *gateway.Wallet) error {
+	keyDir := filepath.Join(mspPath, "keystore")
+	files, err := ioutil.ReadDir(keyDir)
+	if err != nil {
+		return err
+	}
+	if len(files) != 1 {
+		return errors.New("keystore folder should have contain one file")
+	}
+	keyPath := filepath.Join(keyDir, files[0].Name())
+	key, err := ioutil.ReadFile(filepath.Clean(keyPath))
+	if err != nil {
+		return err
 	}
 
-	channelProvider := gs.sdk.ChannelContext(channelID, fabsdk.WithUser(gs.user), fabsdk.WithOrg(gs.org))
-	gs.providers[channelID] = channelProvider
-	return channelProvider
+	certDir := filepath.Join(mspPath, "signcerts")
+	certFiles, err := ioutil.ReadDir(certDir)
+	if err != nil {
+		return err
+	}
+	if len(certFiles) != 1 {
+		return errors.New("signcerts folder should have contain one file")
+	}
+	certPath := filepath.Join(certDir, certFiles[0].Name())
+	cert, err := ioutil.ReadFile(filepath.Clean(certPath))
+	if err != nil {
+		return err
+	}
+
+	identity := gateway.NewX509Identity(mspId, string(cert), string(key))
+
+	err = wallet.Put(userId, identity)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func RandStringBytes(n int) string {
