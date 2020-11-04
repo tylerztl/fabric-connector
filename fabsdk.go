@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"path"
+	"path/filepath"
 
 	pb "github.com/hyperledger/fabric-protos-go/peer"
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/channel"
@@ -21,6 +23,7 @@ import (
 	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk"
 	"github.com/hyperledger/fabric-sdk-go/third_party/github.com/hyperledger/fabric/common/cauthdsl"
 	"github.com/pkg/errors"
+	"github.com/thedevsaddam/gojsonq/v2"
 	"gopkg.in/yaml.v2"
 )
 
@@ -299,8 +302,93 @@ func (f *FabSdkProvider) RegisterBlockEvent(ctx context.Context, channelID strin
 	if err != nil {
 		return errors.Errorf("Failed to create new events client with block events: %s", err)
 	}
-	if err := registerBlockEvent(ctx, eventClient, callBack, true); err != nil {
+	if err := registerBlockEvent(ctx, channelID, eventClient, callBack, true); err != nil {
 		return err
 	}
 	return nil
+}
+
+func (f *FabSdkProvider) RegisterBlockEventRequest(ctx context.Context, channelID, orgId, userId, connectionPath string, callBack BlockEventWithTransaction) error {
+	configBytes, err := LoadConfigBytesFromFile(connectionPath)
+	if err != nil {
+		return err
+	}
+	cryptoPath, ok := gojsonq.New().FromString(string(configBytes)).Find("client.cryptoconfig.path").(string)
+	if !ok {
+		return errors.Errorf("Cant read client.cryptoconfig.path for %s, %s from connection file", channelID, orgId)
+	}
+	certPath, ok := gojsonq.New().FromString(string(configBytes)).Find(fmt.Sprintf("organizations.%s.cryptoPath", orgId)).(string)
+	if !ok {
+		return errors.Errorf("Cant read organizations.%s.cryptoPath for %s from connection file", orgId, channelID)
+	}
+
+	sdk, err := fabsdk.New(config.FromFile(connectionPath))
+	if err != nil {
+		return errors.Errorf("Failed to create new SDK: %s", err.Error())
+	}
+
+	ctxOpt, err := GetSigningIdentity(sdk, userId, orgId, path.Join(cryptoPath, certPath))
+	if err != nil {
+		return err
+	}
+
+	userContext := sdk.ChannelContext(channelID, ctxOpt, fabsdk.WithOrg(orgId))
+	// create event client with block events
+	eventClient, err := event.New(userContext, event.WithBlockEvents(), event.WithSeekType(seek.Newest))
+	if err != nil {
+		return errors.Errorf("Failed to create new events client with block events: %s", err)
+	}
+	if err := registerBlockEvent(ctx, channelID, eventClient, callBack, true); err != nil {
+		return err
+	}
+	return nil
+}
+
+func GetSigningIdentity(sdk *fabsdk.FabricSDK, userId string, mspOpts ...string) (ctxOpt fabsdk.ContextOption, err error) {
+	if len(mspOpts) == 2 {
+		orgName, mspPath := mspOpts[0], mspOpts[1]
+
+		keyDir := filepath.Join(mspPath, "keystore")
+		files, err := ioutil.ReadDir(keyDir)
+		if err != nil {
+			return nil, err
+		}
+		if len(files) != 1 {
+			return nil, errors.New("keystore folder should have contain one file")
+		}
+		keyPath := filepath.Join(keyDir, files[0].Name())
+		key, err := ioutil.ReadFile(filepath.Clean(keyPath))
+		if err != nil {
+			return nil, err
+		}
+
+		certDir := filepath.Join(mspPath, "signcerts")
+		certFiles, err := ioutil.ReadDir(certDir)
+		if err != nil {
+			return nil, err
+		}
+		if len(certFiles) != 1 {
+			return nil, errors.New("signcerts folder should have contain one file")
+		}
+		certPath := filepath.Join(certDir, certFiles[0].Name())
+		cert, err := ioutil.ReadFile(filepath.Clean(certPath))
+		if err != nil {
+			return nil, err
+		}
+
+		mspClient, err := mspclient.New(sdk.Context(), mspclient.WithOrg(orgName))
+		if err != nil {
+			return nil, errors.Errorf("Failed to create mspClient for %s, err: %v", orgName, err)
+		}
+
+		id, err := mspClient.CreateSigningIdentity(msp.WithCert(cert), msp.WithPrivateKey(key))
+		if err != nil {
+			return nil, errors.Errorf("failed when creating identity based on certificate and private key: %s", err)
+		}
+
+		ctxOpt = fabsdk.WithIdentity(id)
+	} else {
+		ctxOpt = fabsdk.WithUser(userId)
+	}
+	return
 }

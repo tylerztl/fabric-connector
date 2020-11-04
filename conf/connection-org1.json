@@ -1,0 +1,72 @@
+{
+    "name": "first-network-org1",
+    "version": "1.0.0",
+    "client": {
+        "organization": "Org1",
+        "connection": {
+            "timeout": {
+                "peer": {
+                    "endorser": "300"
+                }
+            }
+        },
+        "BCCSP": {
+            "security": {
+                "enabled": true,
+                "default": {
+                    "provider": "SW"
+                },
+                "hashAlgorithm": "SM3",
+                "algorithm": "SM2",
+                "softVerify": true,
+                "level": 256
+            }
+        },
+        "cryptoconfig": {
+            "path": "/tmp/fabric/organizations"
+        }
+    },
+    "channels": {
+        "mychannel": {
+            "peers": {
+                "peer0.org1.example.com": {
+                    "endorsingPeer": true,
+                    "chaincodeQuery": true,
+                    "ledgerQuery": true,
+                    "eventSource": true
+                }
+            }
+        }
+    },
+    "organizations": {
+        "org1": {
+            "mspid": "org1MSP",
+            "cryptoPath": "org1.example.com/crypto-config/users/Admin@org1.example.com/msp",
+            "peers": [
+                "peer0.org1.example.com"
+            ]
+        }
+    },
+    "peers": {
+        "peer0.org1.example.com": {
+            "url": "grpcs://peer0.org1.example.com:7051",
+            "tlsCACerts": {
+                "pem": "-----BEGIN CERTIFICATE-----\nMIICIzCCAcmgAwIBAgIUC7mP6hPOPiXsOd28JDBQf334zzAwCgYIKoEcz1UBg3Uw\nbjELMAkGA1UEBhMCQ04xEDAOBgNVBAgTB0JlaWppbmcxEDAOBgNVBAcTB0JlaWpp\nbmcxDzANBgNVBAoTBlpoaWd1aTEPMA0GA1UECxMGRmFicmljMRkwFwYDVQQDExBv\ncmcxLmV4YW1wbGUuY29tMB4XDTIwMTEwNDAzMTMwMFoXDTM1MTEwMTAzMTMwMFow\nbjELMAkGA1UEBhMCQ04xEDAOBgNVBAgTB0JlaWppbmcxEDAOBgNVBAcTB0JlaWpp\nbmcxDzANBgNVBAoTBlpoaWd1aTEPMA0GA1UECxMGRmFicmljMRkwFwYDVQQDExBv\ncmcxLmV4YW1wbGUuY29tMFkwEwYHKoZIzj0CAQYIKoEcz1UBgi0DQgAEB3baLQo4\nMgB4pA+ikbwYDnsfiAKnpCMQdA+RvMdtEyzwv/koENzW5AmToHU3dnqj2nUse0kg\nLJy+PXhs6TIeaaNFMEMwDgYDVR0PAQH/BAQDAgEGMBIGA1UdEwEB/wQIMAYBAf8C\nAQEwHQYDVR0OBBYEFHLbnawKEPXCvZG7oFJbruxzkx3nMAoGCCqBHM9VAYN1A0gA\nMEUCIDuzH1QQtO2hr3fZj7eFd1Au67E7TYF5oivP3AGXFKIsAiEAzhIpLLZtn/7q\nnpvEG4VxahydqaJN/lMRL1V41uIZAsY=\n-----END CERTIFICATE-----"
+            },
+            "grpcOptions": {
+                "ssl-target-name-override": "peer0-org1-example-com.org1-example-com.svc.cluster.local",
+                "hostnameOverride": "peer0.org1.example.com"
+            }
+        }
+    },
+    "entityMatchers": {
+        "peer": [
+            {
+                "pattern": "(\\w*)peer0.org1.example.com(\\w*)",
+                "urlSubstitutionExp": "localhost:30394",
+                "sslTargetOverrideUrlSubstitutionExp": "peer0-org1-example-com.org1-example-com.svc.cluster.local",
+                "mappedHost": "peer0.org1.example.com"
+            }
+        ]
+    }
+}

@@ -35,12 +35,14 @@ type TxData struct {
 
 type BlockEventWithTransaction func(*BlockData)
 
-func registerBlockEvent(ctx context.Context, eventClient *event.Client, callBack BlockEventWithTransaction, skipFirst bool) error {
+func registerBlockEvent(ctx context.Context, channelID string, eventClient *event.Client, callBack BlockEventWithTransaction, skipFirst bool) error {
 	reg, eventch, err := eventClient.RegisterBlockEvent()
 	if err != nil {
 		return errors.Errorf("Error registering for block events: %s", err)
 	}
 	defer eventClient.Unregister(reg)
+
+	fmt.Printf("register block event succeed for %s\n", channelID)
 
 	for {
 		select {

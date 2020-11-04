@@ -20,7 +20,6 @@ var (
 	serverPort        string
 	redisAddr         string
 	redisPassword     string
-	consortiumID      string
 )
 
 var flags *pflag.FlagSet
@@ -70,8 +69,6 @@ func resetFlags() {
 	flags.StringVar(&redisAddr, "redisAddr", "localhost:6379", "rsmq server address")
 
 	flags.StringVar(&redisPassword, "redisPassword", "", "rsmq server password")
-
-	flags.StringVar(&consortiumID, "consortiumID", "483e8a0e477a414e9923e2382880eb5a", "consortiumID for baas server")
 }
 
 func attachFlags(cmd *cobra.Command, names []string) {

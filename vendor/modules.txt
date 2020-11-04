@@ -376,6 +376,9 @@ github.com/stretchr/testify/assert
 # github.com/sykesm/zap-logfmt v0.0.3
 ## explicit
 github.com/sykesm/zap-logfmt
+# github.com/thedevsaddam/gojsonq/v2 v2.5.2
+## explicit
+github.com/thedevsaddam/gojsonq/v2
 # github.com/tmc/grpc-websocket-proxy v0.0.0-20200427203606-3cfed13b9966
 github.com/tmc/grpc-websocket-proxy/wsproxy
 # github.com/urfave/cli v1.22.1

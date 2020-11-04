@@ -7,8 +7,11 @@ SPDX-License-Identifier: Apache-2.0
 package fabric_connector
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"math/rand"
+	"net/http"
 	"sync"
 	"testing"
 	"time"
@@ -104,7 +107,7 @@ func TestFabSdkProvider_RegisterBlockEvent(t *testing.T) {
 	wg.Add(2)
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
-		err := provider.RegisterBlockEvent(ctx, testChannelId, func(data *TransactionInfo) {
+		err := provider.RegisterBlockEvent(ctx, testChannelId, func(data *BlockData) {
 			t.Logf("EventHandler receive data: %+v \n", data)
 		})
 		assert.NoError(t, err)
@@ -113,6 +116,30 @@ func TestFabSdkProvider_RegisterBlockEvent(t *testing.T) {
 	go func() {
 		_, _, err := provider.InvokeChainCode(testChannelId, testCCId,
 			"move", [][]byte{[]byte("a"), []byte("b"), []byte("10"), []byte(testEventID)})
+		assert.NoError(t, err)
+		wg.Done()
+		time.Sleep(time.Second)
+		cancel()
+	}()
+	wg.Wait()
+}
+
+func TestFabSdkProvider_RegisterBlockEventRequest(t *testing.T) {
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		err := provider.RegisterBlockEventRequest(ctx, testChannelId, "org1", "User1",
+			"conf/connection-org1.json",
+			func(data *BlockData) {
+				t.Logf("EventHandler receive data: %+v \n", data)
+			})
+		assert.NoError(t, err)
+		wg.Done()
+	}()
+	go func() {
+		_, _, err := provider.InvokeChainCode(testChannelId, testCCId,
+			"invoke", [][]byte{[]byte("a"), []byte("b"), []byte("10")})
 		assert.NoError(t, err)
 		wg.Done()
 		time.Sleep(time.Second)
@@ -130,4 +157,28 @@ func TestFabSdkProvider_QueryTransaction(t *testing.T) {
 	assert.NoError(t, err)
 
 	t.Logf("query chaincode resps, payload: %+v", payload)
+}
+
+func TestMonitorBlock(t *testing.T) {
+	params := struct {
+		ConsortiumId   string `json:"consortium_id"`
+		ChannelId      string `json:"channel_id"`
+		OrgId          string `json:"org_id"`
+		UserId         string `json:"user_id"`
+		ConnectionFile string `json:"connection_file"`
+	}{
+		ConsortiumId:   "123456",
+		ChannelId:      "mychannel",
+		OrgId:          "org1",
+		UserId:         "User1",
+		ConnectionFile: "conf/connection-org1.json",
+	}
+
+	paramsBytes, err := json.Marshal(params)
+	assert.NoError(t, err)
+
+	resp, err := http.Post("http://localhost:8080/monitor/block", "application/json", bytes.NewBuffer(paramsBytes))
+	assert.NoError(t, err)
+
+	t.Log(resp.StatusCode)
 }

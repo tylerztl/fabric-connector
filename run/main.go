@@ -13,15 +13,15 @@ var mainCmd = &cobra.Command{
 	Use:   "fabric-connector",
 	Short: "Connect to the Fabric network and interact with it by calling the chaincode",
 	Long:  "Connect to the Fabric network and interact with it by calling the chaincode",
-	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		cmdpkg.InitCmd(cmd, args)
-	},
 }
 
 var chaincodeCmd = &cobra.Command{
 	Use:   "chaincode",
 	Short: "Operate a chaincode: invoke|query.",
 	Long:  "Operate a chaincode: invoke|query.",
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		cmdpkg.InitCmd(cmd, args)
+	},
 }
 
 // Cmd returns the cobra command for Chaincode

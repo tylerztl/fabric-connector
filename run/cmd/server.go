@@ -9,11 +9,10 @@ package cmd
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"flag"
 	"log"
 	"net/http"
-	"strconv"
+	"path"
 
 	"github.com/adjust/rmq/v3"
 	"github.com/go-redis/redis/v7"
@@ -43,18 +42,14 @@ func ServerCmd() *cobra.Command {
 				}
 			}()
 
-			go BlockListener(consortiumID, channelID)
-
 			StartServer()
 		},
 	}
 
 	flagList := []string{
-		"channelID",
 		"port",
 		"redisAddr",
 		"redisPassword",
-		"path",
 	}
 	attachFlags(serverCmd, flagList)
 
@@ -81,15 +76,25 @@ func StartServer() {
 		panic(err)
 	}
 
+	log.Printf("start server on listen port: %s", serverPort)
+
 	flag.Parse()
 	log.SetFlags(0)
-	http.HandleFunc("/block", block)
+	http.HandleFunc("/monitor/block", registerBlockEvent)
 	log.Fatal(http.ListenAndServe(":"+serverPort, nil))
 }
 
-func block(w http.ResponseWriter, r *http.Request) {
+type RegisterInfo struct {
+	ConsortiumId   string `json:"consortium_id"`
+	ChannelId      string `json:"channel_id"`
+	OrgId          string `json:"org_id"`
+	UserId         string `json:"user_id"`
+	ConnectionFile string `json:"connection_file"`
+}
+
+func registerBlockEvent(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Add("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Add("Access-Control-Allow-Headers", "accept, content-type, authorization")
 	w.Header().Set("content-type", "application/json")
 
 	var err error
@@ -103,44 +108,52 @@ func block(w http.ResponseWriter, r *http.Request) {
 			w.Write(datas)
 		}
 	}()
-	var pageId, size int
-	pageId, err = strconv.Atoi(r.FormValue("id"))
+
+	info := &RegisterInfo{}
+	err = json.NewDecoder(r.Body).Decode(info)
 	if err != nil {
 		return
 	}
-	size, err = strconv.Atoi(r.FormValue("size"))
-	if err != nil {
-		return
-	}
-	if pageId < 1 || size < 1 {
-		err = errors.New("invalid pageId")
-		return
-	}
-	// TODO
+
+	log.Printf("receive new monitor block request, body: %v, "+
+		"start block event register...", info)
+
+	go BlockListener(info)
+
+	datas = []byte("monitor request send succeed!")
 }
 
-func BlockListener(consortiumId, channelId string) {
-	err := provider.RegisterBlockEvent(context.Background(), channelId, func(data *connector.BlockData) {
-		payload, err := json.Marshal(&RsmqData{
-			Action: "monitor_block",
-			Block:  data,
-			Extra: &ExtraData{
-				ConsortiumId: consortiumId,
-				ChannelName:  channelId,
-			},
-		})
-		if err != nil {
-			log.Printf("block marshal failed, err: %v", err)
-		}
+func BlockListener(reg *RegisterInfo) {
+	var connectionPath string
+	if reg.ConnectionFile != "" {
+		connectionPath = reg.ConnectionFile
+	} else {
+		connectionPath = path.Join(channelID, reg.OrgId, "connection.json")
+	}
 
-		log.Printf("EventHandler receive data: %s", string(payload))
-		err = taskQueue.Publish(string(payload))
-		if err != nil {
-			log.Printf("block %v send to rsmq failed, err: %v", data.BlockHeight, err)
-		}
-	})
+	sdk := &connector.FabSdkProvider{}
+	err := sdk.RegisterBlockEventRequest(context.Background(), reg.ChannelId, reg.OrgId,
+		reg.UserId, connectionPath, func(data *connector.BlockData) {
+			payload, err := json.Marshal(&RsmqData{
+				Action: "monitor_block",
+				Block:  data,
+				Extra: &ExtraData{
+					ConsortiumId: reg.ConsortiumId,
+					ChannelName:  reg.ChannelId,
+				},
+			})
+			if err != nil {
+				log.Printf("block marshal failed, err: %v", err)
+			}
+
+			log.Printf("EventHandler receive data: %s", string(payload))
+			err = taskQueue.Publish(string(payload))
+			if err != nil {
+				log.Printf("block %v send to rsmq failed, err: %v", data.BlockHeight, err)
+			}
+		})
 	if err != nil {
-		log.Print("register block event failed for channel: ", channelId)
+		log.Printf("register block event failed for channel: %s, err: %v", reg.ChannelId, err)
 	}
 }
 
