@@ -76,7 +76,7 @@ func StartServer() {
 		panic(err)
 	}
 
-	log.Printf("start server on listen port: %s", serverPort)
+	log.Printf("connected to rsmq [%s], start server on listen port: %s", redisAddr, serverPort)
 
 	flag.Parse()
 	log.SetFlags(0)

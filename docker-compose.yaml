@@ -1,0 +1,15 @@
+version: '2'
+
+services:
+  fabric-connector:
+    image: harbor.zhigui.com/bcs/fabric-connector:0.0.1
+    build:
+      context: .
+    restart: always
+    container_name: fabric-connector
+    command: /fabric-connector start --port 8080 --redisAddr 106.75.28.246:6379 --redisPassword cGFzc3cwcmRAcmVkaXMK
+    ports:
+      - 8080:8080
+    volumes:
+      - ./conf/connection-org1.json:/conf/connection-org1.json
+      - /tmp/fabric/organizations:/tmp/fabric/organizations

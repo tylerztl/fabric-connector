@@ -63,7 +63,7 @@
         "peer": [
             {
                 "pattern": "(\\w*)peer0.org1.example.com(\\w*)",
-                "urlSubstitutionExp": "localhost:30394",
+                "urlSubstitutionExp": "docker.for.mac.host.internal:30394",
                 "sslTargetOverrideUrlSubstitutionExp": "peer0-org1-example-com.org1-example-com.svc.cluster.local",
                 "mappedHost": "peer0.org1.example.com"
             }
