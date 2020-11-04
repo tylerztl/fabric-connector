@@ -7,15 +7,30 @@ client:
     timeout:
       peer:
         endorser: '300'
-#  cryptoconfig:
-#    path: ${GOPATH}/src/fabric-connector/artifacts/crypto-config
+  cryptoconfig:
+    path: ${GOPATH}/src/fabric-connector/artifacts/crypto-config
+
+channels:
+  mychannel:
+    peers:
+      peer0.org1.example.com:
+        endorsingPeer: true
+        chaincodeQuery: true
+        ledgerQuery: true
+        eventSource: true
+      peer1.org1.example.com:
+        endorsingPeer: true
+        chaincodeQuery: true
+        ledgerQuery: true
+        eventSource: true
+
 organizations:
   Org1:
     mspid: Org1MSP
     peers:
     - peer0.org1.example.com
     - peer1.org1.example.com
-#    cryptoPath: peerOrganizations/org1.example.com/users/{username}@org1.example.com/msp
+    cryptoPath: peerOrganizations/org1.example.com/users/{username}@org1.example.com/msp
 peers:
   peer0.org1.example.com:
     url: grpcs://localhost:7051
@@ -63,3 +78,14 @@ peers:
     grpcOptions:
       ssl-target-name-override: peer1.org1.example.com
       hostnameOverride: peer1.org1.example.com
+
+entityMatchers:
+  peer:
+    - pattern: (\w*)peer0.org1.example.com(\w*)
+      urlSubstitutionExp: localhost:7051
+      sslTargetOverrideUrlSubstitutionExp: peer0.org1.example.com
+      mappedHost: peer0.org1.example.com
+    - pattern: (\w*)peer1.org1.example.com(\w*)
+      urlSubstitutionExp: localhost:8051
+      sslTargetOverrideUrlSubstitutionExp: peer1.org1.example.com
+      mappedHost: peer1.org1.example.com
