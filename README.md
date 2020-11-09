@@ -14,8 +14,8 @@
 
 证书配置需要按提供的目录形式修改，修改包括：
 
-- 文件夹名的修改，如：peer.guomi.com 修改为 org1.example.com(具体按实际值)；
-- 证书文件名的修改，如：Admin@peer.guomi.com 修改为 Admin@org1.example.com(具体按实际值)；
+- 文件夹名的修改，如：org1.example.com 修改为 peer.guomi.com(具体按实际值)；
+- 证书文件名的修改，如：Admin@org1.example.com 修改为 Admin@peer.guomi.com(具体按实际值)；
 
 修改有多处，需要检查各个文件夹及证书文件，其中要注意的是keystore的文件名是证书ski，必须要修改为正确值
 

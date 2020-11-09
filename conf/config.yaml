@@ -50,8 +50,8 @@ client:
       enabled: true
       default:
         provider: "SW"
-      hashAlgorithm: "SM3" # 非国密使用"SHA2"
-      algorithm: "SM2" # 可选的，只有在启用国密是需要配置，非国密不需要配置
+      hashAlgorithm: "SHA2" # 非国密使用"SHA2"
+#      algorithm: "SM2" # 可选的，只有在启用国密是需要配置，非国密不需要配置
       softVerify: true
       level: 256
 
@@ -66,7 +66,7 @@ client:
       cert:
         path:
 tls:
-  guomi:
+  example:
     com:
 #
 # [Optional]. But most apps would have this section so that channel objects can be constructed
@@ -89,7 +89,7 @@ channels:
     #[Required if _default peers not defined; Optional if _default peers defined].
     # list of peers from participating orgs
     peers:
-      peer0.peer.guomi.com:
+      peer0.org1.example.com:
         # [Optional]. will this peer be sent transaction proposals for endorsement? The peer must
         # have the chaincode installed. The app can also use this property to decide which peers
         # to send the chaincode install request. Default: true
@@ -114,14 +114,14 @@ channels:
 #
 organizations:
   Org1:
-    mspid: peer-guomiMSP
+    mspid: org1MSP
 
     # This org's MSP store (absolute path or relative to client.cryptoconfig)
-    cryptoPath: peerOrganizations/peer.guomi.com/users/Admin@peer.guomi.com/msp
+    cryptoPath: peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp
     #    cryptoPath: peerOrganizations/org1.example.com/users/{username}@org1.example.com/msp
 
     peers:
-      - peer0.peer.guomi.com
+      - peer0.org1.example.com
 
     # [Optional]. Certificate Authorities issue certificates for identification purposes in a Fabric based
     # network. Typically certificates provisioning is done in a separate process outside of the
@@ -137,14 +137,14 @@ organizations:
 # SDK is implementation specific. Consult each SDK's documentation for its handling of orderers.
 #
 orderers:
-  orderer0.orderer.guomi.com:
+  orderer0.example.com:
     # [Optional] Default: Infer from hostname
     url: orderer0.orderer.guomi.com:7050
 
     # these are standard properties defined by the gRPC library
     # they will be passed in as-is to gRPC client constructor
     grpcOptions:
-      ssl-target-name-override: orderer0-orderer-guomi-com.orderer-guomi-com.svc.cluster.local
+      ssl-target-name-override: orderer0-example-com.example-com.svc.cluster.local
       # These parameters should be set in coordination with the keepalive policy on the server,
       # as incompatible settings can result in closing of connection.
       # When duration of the 'keep-alive-time' is set to 0 or less the keep alive client parameters are disabled
@@ -157,20 +157,20 @@ orderers:
 
     tlsCACerts:
       # Certificate location absolute path
-      path: ${GOPATH}/src/fabric-connector/conf/crypto-config/ordererOrganizations/orderer.guomi.com/tlsca/tlsca.example.com-cert.pem
+      path: ${GOPATH}/src/fabric-connector/conf/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem
 
 #
 # List of peers to send various requests to, including endorsement, query
 # and event listener registration.
 #
 peers:
-  peer0.peer.guomi.com:
+  peer0.org1.example.com:
     # this URL is used to send endorsement and query requests
     # [Optional] Default: Infer from hostname
-    url: peer0.peer.guomi.com:7051
+    url: peer0.org1.example.com:7051
 
     grpcOptions:
-      ssl-target-name-override: peer0-peer-guomi-com.peer-guomi-com.svc.cluster.local
+      ssl-target-name-override: peer0-org1-example-com.org1-example-com.svc.cluster.local
       # These parameters should be set in coordination with the keepalive policy on the server,
       # as incompatible settings can result in closing of connection.
       # When duration of the 'keep-alive-time' is set to 0 or less the keep alive client parameters are disabled
@@ -183,7 +183,7 @@ peers:
 
     tlsCACerts:
       # Certificate location absolute path
-      path: ${GOPATH}/src/fabric-connector/conf/crypto-config/peerOrganizations/peer.guomi.com/users/Admin@peer.guomi.com/msp/tlscacerts/tlsca.org1.example.com-cert.pem
+      path: ${GOPATH}/src/fabric-connector/conf/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/tlscacerts/tlsca.org1.example.com-cert.pem
 
   # EntityMatchers enable substitution of network hostnames with static configurations
   # so that properties can be mapped. Regex can be used for this purpose
@@ -197,17 +197,17 @@ peers:
 #entityMatchers:
 entityMatchers:
   peer:
-    - pattern: (\w*)peer0.peer.guomi.com(\w*)
-      urlSubstitutionExp: localhost:30001
+    - pattern: (\w*)peer0.org1.example.com(\w*)
+      urlSubstitutionExp: localhost:31988
       eventUrlSubstitutionExp: localhost:7053 # 可忽略
-      sslTargetOverrideUrlSubstitutionExp: peer0-peer-guomi-com.peer-guomi-com.svc.cluster.local
-      mappedHost: peer0.peer.guomi.com
+      sslTargetOverrideUrlSubstitutionExp: peer0-org1-example-com.org1-example-com.svc.cluster.local
+      mappedHost: peer0.org1.example.com
 
   orderer:
-    - pattern: (\w*)orderer0.orderer.guomi.com(\w*)
-      urlSubstitutionExp: localhost:30002
-      sslTargetOverrideUrlSubstitutionExp: orderer0-orderer-guomi-com.orderer-guomi-com.svc.cluster.local
-      mappedHost: orderer0.orderer.guomi.com
+    - pattern: (\w*)orderer0.example.com(\w*)
+      urlSubstitutionExp: localhost:32469
+      sslTargetOverrideUrlSubstitutionExp: orderer0-example-com.example-com.svc.cluster.local
+      mappedHost: orderer0.example.com
 
 #  certificateAuthorities:
 #    - pattern: (\w*)ca0(\w*)

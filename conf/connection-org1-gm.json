@@ -16,7 +16,8 @@
                 "default": {
                     "provider": "SW"
                 },
-                "hashAlgorithm": "SHA2",
+                "hashAlgorithm": "SM3",
+                "algorithm": "SM2",
                 "softVerify": true,
                 "level": 256
             }
@@ -50,7 +51,7 @@
         "peer0.org1.example.com": {
             "url": "grpcs://peer0.org1.example.com:7051",
             "tlsCACerts": {
-                "pem": "-----BEGIN CERTIFICATE-----\nMIICIzCCAcmgAwIBAgIUUNNxpw7vMZcdeY1upOKBxjVTVBowCgYIKoZIzj0EAwIw\nbjELMAkGA1UEBhMCQ04xEDAOBgNVBAgTB0JlaWppbmcxEDAOBgNVBAcTB0JlaWpp\nbmcxDzANBgNVBAoTBlpoaWd1aTEPMA0GA1UECxMGRmFicmljMRkwFwYDVQQDExBv\ncmcxLmV4YW1wbGUuY29tMB4XDTIwMTEwOTA2MDYwMFoXDTM1MTEwNjA2MDYwMFow\nbjELMAkGA1UEBhMCQ04xEDAOBgNVBAgTB0JlaWppbmcxEDAOBgNVBAcTB0JlaWpp\nbmcxDzANBgNVBAoTBlpoaWd1aTEPMA0GA1UECxMGRmFicmljMRkwFwYDVQQDExBv\ncmcxLmV4YW1wbGUuY29tMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEtcZGA/nV\ngPzHnzEsVK+5BuHb7UnqqLfrcu7up2dCPZ2Yfjt0uuqQLdTgA0jRQk1iSGQnEFun\nbIEhv8vXpc2cUqNFMEMwDgYDVR0PAQH/BAQDAgEGMBIGA1UdEwEB/wQIMAYBAf8C\nAQEwHQYDVR0OBBYEFEj3Y+PKVtOcq2FDkS6NiiMCA6c3MAoGCCqGSM49BAMCA0gA\nMEUCIQDbYjeANmzHO+sDyQ/mmDhXfrfFfKm+jXsTd34nxUyMiAIgGXZDf+kLwqcU\nJZhARKnImF1Ue5fALIXQYC875dguaa0=\n-----END CERTIFICATE-----"
+                "pem": "-----BEGIN CERTIFICATE-----\nMIICIzCCAcmgAwIBAgIUC7mP6hPOPiXsOd28JDBQf334zzAwCgYIKoEcz1UBg3Uw\nbjELMAkGA1UEBhMCQ04xEDAOBgNVBAgTB0JlaWppbmcxEDAOBgNVBAcTB0JlaWpp\nbmcxDzANBgNVBAoTBlpoaWd1aTEPMA0GA1UECxMGRmFicmljMRkwFwYDVQQDExBv\ncmcxLmV4YW1wbGUuY29tMB4XDTIwMTEwNDAzMTMwMFoXDTM1MTEwMTAzMTMwMFow\nbjELMAkGA1UEBhMCQ04xEDAOBgNVBAgTB0JlaWppbmcxEDAOBgNVBAcTB0JlaWpp\nbmcxDzANBgNVBAoTBlpoaWd1aTEPMA0GA1UECxMGRmFicmljMRkwFwYDVQQDExBv\ncmcxLmV4YW1wbGUuY29tMFkwEwYHKoZIzj0CAQYIKoEcz1UBgi0DQgAEB3baLQo4\nMgB4pA+ikbwYDnsfiAKnpCMQdA+RvMdtEyzwv/koENzW5AmToHU3dnqj2nUse0kg\nLJy+PXhs6TIeaaNFMEMwDgYDVR0PAQH/BAQDAgEGMBIGA1UdEwEB/wQIMAYBAf8C\nAQEwHQYDVR0OBBYEFHLbnawKEPXCvZG7oFJbruxzkx3nMAoGCCqBHM9VAYN1A0gA\nMEUCIDuzH1QQtO2hr3fZj7eFd1Au67E7TYF5oivP3AGXFKIsAiEAzhIpLLZtn/7q\nnpvEG4VxahydqaJN/lMRL1V41uIZAsY=\n-----END CERTIFICATE-----"
             },
             "grpcOptions": {
                 "ssl-target-name-override": "peer0-org1-example-com.org1-example-com.svc.cluster.local",
@@ -62,7 +63,7 @@
         "peer": [
             {
                 "pattern": "(\\w*)peer0.org1.example.com(\\w*)",
-                "urlSubstitutionExp": "localhost:31988",
+                "urlSubstitutionExp": "docker.for.mac.host.internal:30001",
                 "sslTargetOverrideUrlSubstitutionExp": "peer0-org1-example-com.org1-example-com.svc.cluster.local",
                 "mappedHost": "peer0.org1.example.com"
             }
