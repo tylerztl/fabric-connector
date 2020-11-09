@@ -9,15 +9,19 @@ package cmd
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	"path"
+	"strings"
 
 	"github.com/adjust/rmq/v3"
 	"github.com/go-redis/redis/v7"
 	"github.com/spf13/cobra"
 	connector "github.com/zhigui-projects/fabric-connector"
+	"github.com/zhigui-projects/fabric-connector/leveldb"
 )
 
 type RsmqData struct {
@@ -57,6 +61,7 @@ func ServerCmd() *cobra.Command {
 }
 
 var taskQueue rmq.Queue
+var lvldb leveldb.Database
 
 func StartServer() {
 	redisClient := redis.NewClient(&redis.Options{
@@ -73,6 +78,25 @@ func StartServer() {
 	}
 	taskQueue, err = connection.OpenQueue("baas")
 	if err != nil {
+		panic(err)
+	}
+
+	provider := leveldb.NewProvider()
+	lvldb = provider.GetDBHandle("monitor")
+	iter := lvldb.GetIterator(nil, nil)
+	for iter.Next() {
+		log.Printf("retrieve the persistent block monitoring event [%v], recovering", string(iter.Value()))
+
+		info := &RegisterInfo{}
+		err := json.Unmarshal(iter.Value(), info)
+		if err != nil {
+			log.Println("recovery failed, err: ", err)
+			continue
+		}
+		go BlockListener(info)
+	}
+	iter.Release()
+	if iter.Error() != nil {
 		panic(err)
 	}
 
@@ -115,8 +139,26 @@ func registerBlockEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	key := []byte(strings.Join([]string{info.ConsortiumId, info.ChannelId}, "-"))
+
+	v, err := lvldb.Get(key)
+	if err == nil && len(v.([]byte)) != 0 {
+		err = errors.New(fmt.Sprintf("block monitor event already registered for [%s]-[%s]",
+			string(key), string(v.([]byte))))
+		return
+	}
+
 	log.Printf("receive new monitor block request, body: %v, "+
 		"start block event register...", info)
+
+	val, err := json.Marshal(info)
+	if err != nil {
+		return
+	}
+	err = lvldb.Put(key, val)
+	if err != nil {
+		return
+	}
 
 	go BlockListener(info)
 

@@ -21,6 +21,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.6.1
 	github.com/sykesm/zap-logfmt v0.0.3 // indirect
+	github.com/syndtr/goleveldb v1.0.0
 	github.com/thedevsaddam/gojsonq/v2 v2.5.2
 	github.com/zhigui-projects/gm-crypto v0.0.0 // indirect
 	github.com/zhigui-projects/gm-plugins v0.0.0 // indirect
