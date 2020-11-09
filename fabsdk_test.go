@@ -166,12 +166,14 @@ func TestMonitorBlock(t *testing.T) {
 		OrgId          string `json:"org_id"`
 		UserId         string `json:"user_id"`
 		ConnectionFile string `json:"connection_file"`
+		BlockHeight    uint64 `json:"block_height"`
 	}{
 		ConsortiumId:   "123456",
-		ChannelId:      "mychannel",
+		ChannelId:      "mychannel",fabsdk_test.go 
 		OrgId:          "org1",
 		UserId:         "User1",
 		ConnectionFile: "conf/connection-org1.json",
+		BlockHeight:    0,
 	}
 
 	paramsBytes, err := json.Marshal(params)

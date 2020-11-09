@@ -113,8 +113,9 @@ type RegisterInfo struct {
 	ConsortiumId   string `json:"consortium_id"`
 	ChannelId      string `json:"channel_id"`
 	OrgId          string `json:"org_id"`
-	UserId         string `json:"user_id"`
-	ConnectionFile string `json:"connection_file"`
+	UserId         string `json:"user_id"`         // optional
+	ConnectionFile string `json:"connection_file"` // optional
+	BlockHeight    uint64 `json:"block_height"`    // optional
 }
 
 func registerBlockEvent(w http.ResponseWriter, r *http.Request) {
@@ -181,6 +182,10 @@ func BlockListener(reg *RegisterInfo) {
 		if err != nil {
 			panic(err)
 		}
+	}
+
+	if reg.BlockHeight > fromBlock {
+		fromBlock = reg.BlockHeight
 	}
 
 	sdk := &connector.FabSdkProvider{}
