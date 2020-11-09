@@ -308,7 +308,7 @@ func (f *FabSdkProvider) RegisterBlockEvent(ctx context.Context, channelID strin
 	return nil
 }
 
-func (f *FabSdkProvider) RegisterBlockEventRequest(ctx context.Context, channelID, orgId, userId, connectionPath string, callBack BlockEventWithTransaction) error {
+func (f *FabSdkProvider) RegisterBlockEventRequest(ctx context.Context, channelID, orgId, userId, connectionPath string, fromBlock uint64, callBack BlockEventWithTransaction) error {
 	configBytes, err := LoadConfigBytesFromFile(connectionPath)
 	if err != nil {
 		return err
@@ -333,8 +333,9 @@ func (f *FabSdkProvider) RegisterBlockEventRequest(ctx context.Context, channelI
 	}
 
 	userContext := sdk.ChannelContext(channelID, ctxOpt, fabsdk.WithOrg(orgId))
+
 	// create event client with block events
-	eventClient, err := event.New(userContext, event.WithBlockEvents(), event.WithSeekType(seek.Newest))
+	eventClient, err := event.New(userContext, event.WithBlockEvents(), event.WithSeekType(seek.FromBlock), event.WithBlockNum(fromBlock))
 	if err != nil {
 		return errors.Errorf("Failed to create new events client with block events: %s", err)
 	}

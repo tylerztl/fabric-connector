@@ -15,6 +15,7 @@ import (
 	"log"
 	"net/http"
 	"path"
+	"strconv"
 	"strings"
 
 	"github.com/adjust/rmq/v3"
@@ -173,9 +174,18 @@ func BlockListener(reg *RegisterInfo) {
 		connectionPath = path.Join(channelID, reg.OrgId, "connection.json")
 	}
 
+	var fromBlock uint64 = 0
+	v, err := lvldb.Get([]byte(strings.Join([]string{reg.ConsortiumId, reg.ChannelId, "height"}, "-")))
+	if err == nil {
+		fromBlock, err = strconv.ParseUint(string(v.([]byte)), 10, 64)
+		if err != nil {
+			panic(err)
+		}
+	}
+
 	sdk := &connector.FabSdkProvider{}
-	err := sdk.RegisterBlockEventRequest(context.Background(), reg.ChannelId, reg.OrgId,
-		reg.UserId, connectionPath, func(data *connector.BlockData) {
+	err = sdk.RegisterBlockEventRequest(context.Background(), reg.ChannelId, reg.OrgId,
+		reg.UserId, connectionPath, fromBlock, func(data *connector.BlockData) {
 			payload, err := json.Marshal(&RsmqData{
 				Action: "monitor_block",
 				Block:  data,
@@ -192,6 +202,12 @@ func BlockListener(reg *RegisterInfo) {
 			err = taskQueue.Publish(string(payload))
 			if err != nil {
 				log.Printf("block %v send to rsmq failed, err: %v", data.BlockHeight, err)
+			}
+
+			key := []byte(strings.Join([]string{reg.ConsortiumId, reg.ChannelId, "height"}, "-"))
+			err = lvldb.Put(key, []byte(strconv.FormatUint(data.BlockHeight, 10)))
+			if err != nil {
+				log.Printf("update [%s:%d] failed, err: %v", string(key), data.BlockHeight, err)
 			}
 		})
 	if err != nil {

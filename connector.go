@@ -35,7 +35,7 @@ type ChainCodeUserOperator interface {
 
 type EventCallBack interface {
 	RegisterBlockEvent(ctx context.Context, channelID string, event BlockEventWithTransaction) error
-	RegisterBlockEventRequest(ctx context.Context, channelID, orgId, userId, connectionPath string, event BlockEventWithTransaction) error
+	RegisterBlockEventRequest(ctx context.Context, channelID, orgId, userId, connectionPath string, fromBlock uint64, event BlockEventWithTransaction) error
 }
 
 type Gateway interface {

@@ -130,7 +130,7 @@ func TestFabSdkProvider_RegisterBlockEventRequest(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
 		err := provider.RegisterBlockEventRequest(ctx, testChannelId, "org1", "User1",
-			"conf/connection-org1.json",
+			"conf/connection-org1.json", 0,
 			func(data *BlockData) {
 				t.Logf("EventHandler receive data: %+v \n", data)
 			})
