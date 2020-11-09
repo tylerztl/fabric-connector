@@ -169,7 +169,7 @@ func TestMonitorBlock(t *testing.T) {
 		BlockHeight    uint64 `json:"block_height"`
 	}{
 		ConsortiumId:   "123456",
-		ChannelId:      "mychannel",fabsdk_test.go 
+		ChannelId:      "mychannel",
 		OrgId:          "org1",
 		UserId:         "User1",
 		ConnectionFile: "conf/connection-org1.json",
