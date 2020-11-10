@@ -112,10 +112,17 @@ func StartServer() {
 type RegisterInfo struct {
 	ConsortiumId   string `json:"consortium_id"`
 	ChannelId      string `json:"channel_id"`
+	OrgDomain      string `json:"org_domain"`
 	OrgId          string `json:"org_id"`
 	UserId         string `json:"user_id"`         // optional
 	ConnectionFile string `json:"connection_file"` // optional
 	BlockHeight    uint64 `json:"block_height"`    // optional
+}
+
+type RegisterResp struct {
+	ChannelId string `json:"channel_id"`
+	OrgDomain string `json:"org_domain"`
+	Data      string `json:"data"`
 }
 
 func registerBlockEvent(w http.ResponseWriter, r *http.Request) {
@@ -124,22 +131,31 @@ func registerBlockEvent(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", "application/json")
 
 	var err error
-	var datas []byte
+	var data string
+	info := &RegisterInfo{}
 	defer func() {
+		status := 200
 		if err != nil {
-			w.WriteHeader(500)
-			w.Write([]byte(err.Error()))
-		} else {
-			w.WriteHeader(200)
-			w.Write(datas)
+			status = 500
+			data = err.Error()
 		}
+		res, _ := json.Marshal(&RegisterResp{
+			ChannelId: info.ChannelId,
+			OrgDomain: info.OrgDomain,
+			Data:      data,
+		})
+
+		w.WriteHeader(status)
+		w.Write(res)
 	}()
 
-	info := &RegisterInfo{}
 	err = json.NewDecoder(r.Body).Decode(info)
 	if err != nil {
 		return
 	}
+
+	orgId := strings.ReplaceAll(info.OrgDomain, ".", "-")
+	info.OrgId = orgId
 
 	key := []byte(strings.Join([]string{info.ConsortiumId, info.ChannelId}, "-"))
 
@@ -164,7 +180,7 @@ func registerBlockEvent(w http.ResponseWriter, r *http.Request) {
 
 	go BlockListener(info)
 
-	datas = []byte("monitor request send succeed!")
+	data = "monitor request send succeed!"
 }
 
 func BlockListener(reg *RegisterInfo) {
@@ -172,7 +188,7 @@ func BlockListener(reg *RegisterInfo) {
 	if reg.ConnectionFile != "" {
 		connectionPath = reg.ConnectionFile
 	} else {
-		connectionPath = path.Join(channelID, reg.OrgId, "connection.json")
+		connectionPath = path.Join("/mnt/fabric/gateway", reg.OrgDomain, reg.ChannelId, "connection.json")
 	}
 
 	var fromBlock uint64 = 0

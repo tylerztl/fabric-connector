@@ -163,14 +163,14 @@ func TestMonitorBlock(t *testing.T) {
 	params := struct {
 		ConsortiumId   string `json:"consortium_id"`
 		ChannelId      string `json:"channel_id"`
-		OrgId          string `json:"org_id"`
+		OrgDomain      string `json:"org_domain"`
 		UserId         string `json:"user_id"`
 		ConnectionFile string `json:"connection_file"`
 		BlockHeight    uint64 `json:"block_height"`
 	}{
 		ConsortiumId:   "123456",
 		ChannelId:      "mychannel",
-		OrgId:          "org1",
+		OrgDomain:      "org1",
 		UserId:         "User1",
 		ConnectionFile: "conf/connection-org1.json",
 		BlockHeight:    0,
