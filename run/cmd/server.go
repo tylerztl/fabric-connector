@@ -18,8 +18,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/adjust/rmq/v3"
-	"github.com/go-redis/redis/v7"
+	"github.com/gomodule/redigo/redis"
 	"github.com/spf13/cobra"
 	connector "github.com/zhigui-projects/fabric-connector"
 	"github.com/zhigui-projects/fabric-connector/leveldb"
@@ -61,26 +60,18 @@ func ServerCmd() *cobra.Command {
 	return serverCmd
 }
 
-var taskQueue rmq.Queue
+const RMQ string = "baas"
+
+var redisConn redis.Conn
 var lvldb leveldb.Database
 
 func StartServer() {
-	redisClient := redis.NewClient(&redis.Options{
-		Addr:     redisAddr,
-		Password: redisPassword,
-	})
-
-	errChan := make(chan error, 10)
-	go logErrors(errChan)
-
-	connection, err := rmq.OpenConnectionWithRedisClient("baas rsmq server", redisClient, errChan)
+	var err error
+	redisConn, err = redis.Dial("tcp", redisAddr, redis.DialPassword(redisPassword))
 	if err != nil {
 		panic(err)
 	}
-	taskQueue, err = connection.OpenQueue("baas")
-	if err != nil {
-		panic(err)
-	}
+	defer redisConn.Close()
 
 	provider := leveldb.NewProvider()
 	lvldb = provider.GetDBHandle("monitor")
@@ -220,10 +211,12 @@ func BlockListener(reg *RegisterInfo) {
 			}
 
 			log.Printf("EventHandler receive data: %s", string(payload))
-			err = taskQueue.Publish(string(payload))
+
+			reply, err := redisConn.Do("rpush", RMQ, string(payload))
 			if err != nil {
-				log.Printf("block %v send to rsmq failed, err: %v", data.BlockHeight, err)
+				log.Printf("produce block: %d to redis error: %v", data.BlockHeight, err)
 			}
+			log.Printf("produce block: %d to redis with reply: %v", data.BlockHeight, reply)
 
 			key := []byte(strings.Join([]string{reg.ConsortiumId, reg.ChannelId, "height"}, "-"))
 			err = lvldb.Put(key, []byte(strconv.FormatUint(data.BlockHeight, 10)))
@@ -233,24 +226,5 @@ func BlockListener(reg *RegisterInfo) {
 		})
 	if err != nil {
 		log.Printf("register block event failed for channel: %s, err: %v", reg.ChannelId, err)
-	}
-}
-
-func logErrors(errChan <-chan error) {
-	for err := range errChan {
-		switch err := err.(type) {
-		case *rmq.HeartbeatError:
-			if err.Count == rmq.HeartbeatErrorLimit {
-				log.Print("heartbeat error (limit): ", err)
-			} else {
-				log.Print("heartbeat error: ", err)
-			}
-		case *rmq.ConsumeError:
-			log.Print("consume error: ", err)
-		case *rmq.DeliveryError:
-			log.Print("delivery error: ", err.Delivery, err)
-		default:
-			log.Print("other error: ", err)
-		}
 	}
 }
