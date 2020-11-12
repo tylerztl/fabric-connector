@@ -71,6 +71,7 @@ func updateBlock(block *cb.Block, callBack BlockEventWithTransaction) {
 
 	fmt.Printf("Seek block number:%d \n", block.Header.Number)
 
+	chainLocal, _ := time.LoadLocation("Local")
 	txList := make([]*TxData, 0)
 	for i, envBytes := range block.Data.Data {
 		envelope, err := protoutil.GetEnvelopeFromBlock(envBytes)
@@ -93,7 +94,7 @@ func updateBlock(block *cb.Block, callBack BlockEventWithTransaction) {
 		}
 		channelHeader, _ := protoutil.UnmarshalChannelHeader(payload.Header.ChannelHeader)
 		txTimestamp := channelHeader.Timestamp
-		txTime := time.Unix(txTimestamp.GetSeconds(), int64(txTimestamp.GetNanos()))
+		txTime := time.Unix(txTimestamp.GetSeconds(), int64(txTimestamp.GetNanos())).In(chainLocal).Format("2006-01-02 15:04:05")
 
 		validationCode := int32(block.Metadata.Metadata[cb.BlockMetadataIndex_TRANSACTIONS_FILTER][i])
 
@@ -114,7 +115,7 @@ func updateBlock(block *cb.Block, callBack BlockEventWithTransaction) {
 		tx := &TxData{
 			Id:             channelHeader.TxId,
 			ChannelId:      channelHeader.ChannelId,
-			TimeStamp:      txTime.String(),
+			TimeStamp:      txTime,
 			ValidationCode: validationCode,
 			ChaincodeType:  int32(cis.ChaincodeSpec.Type),
 			ChaincodeName:  ccId,
