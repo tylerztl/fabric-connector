@@ -4,13 +4,15 @@ go 1.14
 
 require (
 	github.com/Shopify/sarama v1.27.0 // indirect
-	github.com/adjust/rmq/v3 v3.0.0
+	github.com/adjust/rmq/v3 v3.0.0 // indirect
 	github.com/fsouza/go-dockerclient v1.6.5 // indirect
-	github.com/go-redis/redis/v7 v7.4.0
+	github.com/go-redis/redis v6.15.8+incompatible
+	github.com/go-redis/redis/v7 v7.4.0 // indirect
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/protobuf v1.4.2
 	github.com/gomodule/redigo v1.8.2
 	github.com/google/certificate-transparency-go v1.1.1 // indirect
+	github.com/grafana/go-rsmq v0.1.0
 	github.com/hashicorp/go-version v1.2.1 // indirect
 	github.com/hyperledger/fabric v1.4.8 // indirect
 	github.com/hyperledger/fabric-amcl v0.0.0-20200424173818-327c9e2cf77a // indirect
