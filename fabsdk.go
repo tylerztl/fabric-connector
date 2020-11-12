@@ -336,15 +336,17 @@ func (f *FabSdkProvider) RegisterBlockEventRequest(ctx context.Context, channelI
 
 	// create event client with block events
 	var eventClient *event.Client
+	skipFirst := false
 	if fromBlock < 0 {
 		eventClient, err = event.New(userContext, event.WithBlockEvents(), event.WithSeekType(seek.Oldest))
 	} else {
+		skipFirst = true
 		eventClient, err = event.New(userContext, event.WithBlockEvents(), event.WithSeekType(seek.FromBlock), event.WithBlockNum(uint64(fromBlock)))
 	}
 	if err != nil {
 		return errors.Errorf("Failed to create new events client with block events: %s", err)
 	}
-	if err := registerBlockEvent(ctx, channelID, eventClient, callBack, true); err != nil {
+	if err := registerBlockEvent(ctx, channelID, eventClient, callBack, skipFirst); err != nil {
 		return err
 	}
 	return nil

@@ -65,10 +65,6 @@ func registerBlockEvent(ctx context.Context, channelID string, eventClient *even
 }
 
 func updateBlock(block *cb.Block, callBack BlockEventWithTransaction) {
-	if block.Header.Number == 0 {
-		return
-	}
-
 	fmt.Printf("Seek block number:%d \n", block.Header.Number)
 
 	chainLocal, _ := time.LoadLocation("Local")
