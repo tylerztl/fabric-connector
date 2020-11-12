@@ -113,7 +113,7 @@ type RegisterInfo struct {
 	OrgId          string `json:"org_id"`
 	UserId         string `json:"user_id"`         // optional
 	ConnectionFile string `json:"connection_file"` // optional
-	BlockHeight    uint64 `json:"block_height"`    // optional
+	BlockHeight    int64  `json:"block_height"`    // optional
 }
 
 type RegisterResp struct {
@@ -129,7 +129,9 @@ func registerBlockEvent(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 	var data string
-	info := &RegisterInfo{}
+	info := &RegisterInfo{
+		BlockHeight: -1,
+	}
 	defer func() {
 		status := 200
 		if err != nil {
@@ -163,7 +165,7 @@ func registerBlockEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("receive new monitor block request, body: %v, "+
+	log.Printf("receive new monitor block request, body: %+v, "+
 		"start block event register...", info)
 
 	val, err := json.Marshal(info)
@@ -188,10 +190,10 @@ func BlockListener(reg *RegisterInfo) {
 		connectionPath = path.Join("/mnt/fabric/gateway", reg.OrgDomain, reg.ChannelId, "connection.json")
 	}
 
-	var fromBlock uint64 = 0
+	var fromBlock int64 = -1
 	v, err := lvldb.Get([]byte(strings.Join([]string{reg.ConsortiumId, reg.ChannelId, "height"}, "-")))
 	if err == nil {
-		fromBlock, err = strconv.ParseUint(string(v.([]byte)), 10, 64)
+		fromBlock, err = strconv.ParseInt(string(v.([]byte)), 10, 64)
 		if err != nil {
 			panic(err)
 		}
