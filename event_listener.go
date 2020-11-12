@@ -28,9 +28,9 @@ type TxData struct {
 	ValidationCode int32  `json:"validationCode"`
 	ChaincodeType  int32  `json:"chaincode_type"`
 	ChaincodeName  string `json:"chaincode_name"`
-	ChainCodeInput string `json:"chain_code_input"`
-	Endorser       string `json:"endorser"`
-	EndorserId     string `json:"endorserId"`
+	ChainCodeInput string `json:"chaincode_input"`
+	EndorserMsp    string `json:"endorser_msp"`
+	EndorserId     string `json:"endorser_id"`
 }
 
 type BlockEventWithTransaction func(*BlockData)
@@ -124,7 +124,7 @@ func updateBlock(block *cb.Block, callBack BlockEventWithTransaction) {
 		if len(cap.Action.Endorsements) > 0 {
 			si, err := protoutil.Deserialize(cap.Action.Endorsements[0].Endorser)
 			if err == nil {
-				tx.Endorser = si.Mspid
+				tx.EndorserMsp = si.Mspid
 				tx.EndorserId = string(si.IdBytes)
 			}
 		}
