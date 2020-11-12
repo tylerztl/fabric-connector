@@ -213,6 +213,7 @@ func BlockListener(reg *RegisterInfo) {
 			})
 			if err != nil {
 				log.Printf("block marshal failed, err: %v", err)
+				return
 			}
 
 			log.Printf("EventHandler receive data: %s", string(payload))
@@ -224,6 +225,7 @@ func BlockListener(reg *RegisterInfo) {
 			reply, err := redisClient.HSet("baas:outqueue:Q", hexVal, string(payload)).Result()
 			if err != nil {
 				log.Printf("produce block: %d, digest: %s to redis error: %v", data.BlockHeight, hexVal, err)
+				return
 			}
 			log.Printf("produce block: %d, digest: %s to redis with reply: %v", data.BlockHeight, hexVal, reply)
 
@@ -231,6 +233,7 @@ func BlockListener(reg *RegisterInfo) {
 			err = lvldb.Put(key, []byte(strconv.FormatUint(data.BlockHeight, 10)))
 			if err != nil {
 				log.Printf("update [%s:%d] failed, err: %v", string(key), data.BlockHeight, err)
+				return
 			}
 		})
 	if err != nil {
