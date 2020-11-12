@@ -8,6 +8,8 @@ package cmd
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -18,7 +20,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gomodule/redigo/redis"
+	"github.com/go-redis/redis/v7"
 	"github.com/spf13/cobra"
 	connector "github.com/zhigui-projects/fabric-connector"
 	"github.com/zhigui-projects/fabric-connector/leveldb"
@@ -60,18 +62,21 @@ func ServerCmd() *cobra.Command {
 	return serverCmd
 }
 
-const RMQ string = "baas"
-
-var redisConn redis.Conn
+var redisClient *redis.Client
 var lvldb leveldb.Database
 
 func StartServer() {
-	var err error
-	redisConn, err = redis.Dial("tcp", redisAddr, redis.DialPassword(redisPassword))
+	redisClient = redis.NewClient(&redis.Options{
+		Addr:     redisAddr,
+		Password: redisPassword,
+	})
+	defer redisClient.Close()
+
+	pong, err := redisClient.Ping().Result()
 	if err != nil {
-		panic(err)
+		panic("ping redis server err: " + err.Error())
 	}
-	defer redisConn.Close()
+	log.Printf("ping redis server succeed with result: %s", pong)
 
 	provider := leveldb.NewProvider()
 	lvldb = provider.GetDBHandle("monitor")
@@ -212,11 +217,15 @@ func BlockListener(reg *RegisterInfo) {
 
 			log.Printf("EventHandler receive data: %s", string(payload))
 
-			reply, err := redisConn.Do("rpush", RMQ, string(payload))
+			hash := sha256.New()
+			hash.Write(payload)
+			digest := hash.Sum(nil)
+			hexVal := hex.EncodeToString(digest)
+			reply, err := redisClient.HSet("baas:outqueue:Q", hexVal, string(payload)).Result()
 			if err != nil {
-				log.Printf("produce block: %d to redis error: %v", data.BlockHeight, err)
+				log.Printf("produce block: %d, digest: %s to redis error: %v", data.BlockHeight, hexVal, err)
 			}
-			log.Printf("produce block: %d to redis with reply: %v", data.BlockHeight, reply)
+			log.Printf("produce block: %d, digest: %s to redis with reply: %v", data.BlockHeight, hexVal, reply)
 
 			key := []byte(strings.Join([]string{reg.ConsortiumId, reg.ChannelId, "height"}, "-"))
 			err = lvldb.Put(key, []byte(strconv.FormatUint(data.BlockHeight, 10)))
