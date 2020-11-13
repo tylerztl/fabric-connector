@@ -45,7 +45,7 @@ func GetPayloads(txActions *peer.TransactionAction) (*peer.ChaincodeInvocationSp
 	}
 	pRespPayload, err := UnmarshalProposalResponsePayload(ccPayload.Action.ProposalResponsePayload)
 	if err != nil {
-		return cis, nil, nil, err
+		return cis, ccPayload, nil, nil
 	}
 
 	if pRespPayload.Extension == nil {

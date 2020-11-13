@@ -96,6 +96,7 @@ func updateBlock(block *cb.Block, callBack BlockEventWithTransaction) {
 
 		var ccId string
 		var args []string
+		var ccType int32
 		if cis != nil && cis.ChaincodeSpec != nil {
 			if cis.ChaincodeSpec.ChaincodeId != nil {
 				ccId = cis.ChaincodeSpec.ChaincodeId.Name
@@ -106,6 +107,7 @@ func updateBlock(block *cb.Block, callBack BlockEventWithTransaction) {
 					args[k] = string(v)
 				}
 			}
+			ccType = int32(cis.ChaincodeSpec.Type)
 		}
 
 		tx := &TxData{
@@ -113,7 +115,7 @@ func updateBlock(block *cb.Block, callBack BlockEventWithTransaction) {
 			ChannelId:      channelHeader.ChannelId,
 			TimeStamp:      txTime,
 			ValidationCode: validationCode,
-			ChaincodeType:  int32(cis.ChaincodeSpec.Type),
+			ChaincodeType:  ccType,
 			ChaincodeName:  ccId,
 			ChainCodeInput: strings.Join(args, ","),
 		}
