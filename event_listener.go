@@ -22,15 +22,19 @@ type BlockData struct {
 }
 
 type TxData struct {
-	Id             string `json:"id"`
-	ChannelId      string `json:"channel_id"`
-	TimeStamp      string `json:"timestamp"`
-	ValidationCode int32  `json:"validationCode"`
-	ChaincodeType  int32  `json:"chaincode_type"`
-	ChaincodeName  string `json:"chaincode_name"`
-	ChainCodeInput string `json:"chaincode_input"`
-	EndorserMsp    string `json:"endorser_msp"`
-	EndorserId     string `json:"endorser_id"`
+	Id             string      `json:"id"`
+	ChannelId      string      `json:"channel_id"`
+	TimeStamp      string      `json:"timestamp"`
+	ValidationCode int32       `json:"validationCode"`
+	ChaincodeType  int32       `json:"chaincode_type"`
+	ChaincodeName  string      `json:"chaincode_name"`
+	ChainCodeInput string      `json:"chaincode_input"`
+	Endorsers      []*Endorser `json:"endorsers"`
+}
+
+type Endorser struct {
+	EndorserMsp string `json:"endorser_msp"`
+	EndorserId  string `json:"endorser_id"`
 }
 
 type BlockEventWithTransaction func(*BlockData)
@@ -116,11 +120,17 @@ func updateBlock(block *cb.Block, callBack BlockEventWithTransaction) {
 			ChainCodeInput: strings.Join(args, ","),
 		}
 		if len(cap.Action.Endorsements) > 0 {
-			si, err := protoutil.Deserialize(cap.Action.Endorsements[0].Endorser)
-			if err == nil {
-				tx.EndorserMsp = si.Mspid
-				tx.EndorserId = string(si.IdBytes)
+			endorsers := make([]*Endorser, len(cap.Action.Endorsements))
+			for k, v := range cap.Action.Endorsements {
+				si, err := protoutil.Deserialize(v.Endorser)
+				if err == nil {
+					endorsers[k] = &Endorser{
+						EndorserMsp: si.Mspid,
+						EndorserId:  string(si.IdBytes),
+					}
+				}
 			}
+			tx.Endorsers = endorsers
 		}
 
 		txList = append(txList, tx)
