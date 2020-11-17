@@ -172,13 +172,20 @@ func TestMonitorBlock(t *testing.T) {
 		ChannelId:      "mychannel",
 		OrgDomain:      "org1",
 		UserId:         "User1",
-		ConnectionFile: "conf/connection-org1.json",
+		ConnectionFile: "conf/connection-org1-gm.json",
 	}
 
 	paramsBytes, err := json.Marshal(params)
 	assert.NoError(t, err)
 
 	resp, err := http.Post("http://localhost:8080/monitor/block", "application/json", bytes.NewBuffer(paramsBytes))
+	assert.NoError(t, err)
+
+	t.Log(resp.StatusCode)
+}
+
+func TestUnregisterMonitor(t *testing.T) {
+	resp, err := http.Get("http://localhost:8080/monitor/unregister?consortium_id=123456")
 	assert.NoError(t, err)
 
 	t.Log(resp.StatusCode)

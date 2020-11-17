@@ -25,6 +25,9 @@ import (
 	"github.com/zhigui-projects/fabric-connector/leveldb"
 )
 
+const RegisterSuffix = "register"
+const HeightSuffix = "height"
+
 type RsmqData struct {
 	Action string               `json:"action"`
 	Block  *connector.BlockData `json:"block"`
@@ -63,6 +66,7 @@ func ServerCmd() *cobra.Command {
 
 var smq *rsmq.RedisSMQ
 var lvldb leveldb.Database
+var eventsHub map[string]map[string]context.CancelFunc
 
 func StartServer() {
 	redisClient := redis.NewClient(&redis.Options{
@@ -77,18 +81,23 @@ func StartServer() {
 	}
 	log.Printf("ping redis server succeed with result: %s", pong)
 
+	eventsHub = make(map[string]map[string]context.CancelFunc)
+
 	smq = rsmq.NewRedisSMQ(redisClient, "baas")
 
 	provider := leveldb.NewProvider()
 	lvldb = provider.GetDBHandle("monitor")
 	iter := lvldb.GetIterator(nil, nil)
 	for iter.Next() {
+		if !strings.HasSuffix(string(iter.Key()), RegisterSuffix) {
+			continue
+		}
+
 		log.Printf("retrieve the persistent block monitoring event [%v], recovering", string(iter.Value()))
 
 		info := &RegisterInfo{}
 		err := json.Unmarshal(iter.Value(), info)
 		if err != nil {
-			log.Println("recovery failed, err: ", err)
 			continue
 		}
 		go BlockListener(info)
@@ -103,6 +112,7 @@ func StartServer() {
 	flag.Parse()
 	log.SetFlags(0)
 	http.HandleFunc("/monitor/block", registerBlockEvent)
+	http.HandleFunc("/monitor/unregister", unregisterBlockEvent)
 	log.Fatal(http.ListenAndServe(":"+serverPort, nil))
 }
 
@@ -156,7 +166,7 @@ func registerBlockEvent(w http.ResponseWriter, r *http.Request) {
 	orgId := strings.ReplaceAll(info.OrgDomain, ".", "-")
 	info.OrgId = orgId
 
-	key := []byte(strings.Join([]string{info.ConsortiumId, info.ChannelId}, "-"))
+	key := []byte(strings.Join([]string{info.ConsortiumId, info.ChannelId, RegisterSuffix}, "-"))
 
 	v, err := lvldb.Get(key)
 	if err == nil && len(v.([]byte)) != 0 {
@@ -168,18 +178,48 @@ func registerBlockEvent(w http.ResponseWriter, r *http.Request) {
 	log.Printf("receive new monitor block request, body: %+v, "+
 		"start block event register...", info)
 
-	val, err := json.Marshal(info)
-	if err != nil {
-		return
-	}
-	err = lvldb.Put(key, val)
-	if err != nil {
-		return
-	}
-
 	go BlockListener(info)
 
 	data = "monitor request send succeed!"
+}
+
+func unregisterBlockEvent(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Add("Access-Control-Allow-Headers", "accept, content-type, authorization")
+	w.Header().Set("content-type", "application/json")
+
+	consortiumId := r.FormValue("consortium_id")
+	if consortiumId == "" {
+		w.WriteHeader(500)
+		w.Write([]byte("invalid consortium_id params because of empty"))
+		return
+	}
+
+	if _, ok := eventsHub[consortiumId]; !ok {
+		w.WriteHeader(500)
+		w.Write([]byte("invalid consortium_id params because of not exist"))
+		return
+	}
+	for _, cancel := range eventsHub[consortiumId] {
+		cancel()
+	}
+
+	iter := lvldb.GetIterator(nil, nil)
+	for iter.Next() {
+		if !strings.HasPrefix(string(iter.Key()), consortiumId+"-") {
+			continue
+		}
+		lvldb.Delete(iter.Key())
+	}
+	iter.Release()
+	err := iter.Error()
+	if err != nil {
+		w.WriteHeader(500)
+		w.Write([]byte(err.Error()))
+	} else {
+		w.WriteHeader(200)
+		w.Write([]byte(fmt.Sprintf("unregister block event succeed for consortiumId: %s", consortiumId)))
+	}
 }
 
 func BlockListener(reg *RegisterInfo) {
@@ -191,20 +231,17 @@ func BlockListener(reg *RegisterInfo) {
 	}
 
 	var fromBlock int64 = -1
-	v, err := lvldb.Get([]byte(strings.Join([]string{reg.ConsortiumId, reg.ChannelId, "height"}, "-")))
+	v, err := lvldb.Get([]byte(strings.Join([]string{reg.ConsortiumId, reg.ChannelId, HeightSuffix}, "-")))
 	if err == nil {
-		fromBlock, err = strconv.ParseInt(string(v.([]byte)), 10, 64)
-		if err != nil {
-			panic(err)
-		}
+		fromBlock, _ = strconv.ParseInt(string(v.([]byte)), 10, 64)
 	}
-
 	if reg.BlockHeight > fromBlock {
 		fromBlock = reg.BlockHeight
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
 	sdk := &connector.FabSdkProvider{}
-	err = sdk.RegisterBlockEventRequest(context.Background(), reg.ChannelId, reg.OrgId,
+	err = sdk.RegisterBlockEventRequest(ctx, reg.ChannelId, reg.OrgId,
 		reg.UserId, connectionPath, fromBlock, func(data *connector.BlockData) {
 			payload, err := json.Marshal(&RsmqData{
 				Action: "monitor_block",
@@ -237,5 +274,20 @@ func BlockListener(reg *RegisterInfo) {
 		})
 	if err != nil {
 		log.Printf("register block event failed for channel: %s, err: %v", reg.ChannelId, err)
+	} else {
+		if channels, ok := eventsHub[reg.ConsortiumId]; ok {
+			if v, ok := channels[reg.ChannelId]; ok {
+				v()
+			}
+			eventsHub[reg.ConsortiumId][reg.ChannelId] = cancel
+		} else {
+			channels = make(map[string]context.CancelFunc)
+			channels[reg.ChannelId] = cancel
+			eventsHub[reg.ConsortiumId] = channels
+		}
+
+		val, _ := json.Marshal(reg)
+		key := []byte(strings.Join([]string{reg.ConsortiumId, reg.ChannelId, RegisterSuffix}, "-"))
+		lvldb.Put(key, val)
 	}
 }

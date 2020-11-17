@@ -302,9 +302,12 @@ func (f *FabSdkProvider) RegisterBlockEvent(ctx context.Context, channelID strin
 	if err != nil {
 		return errors.Errorf("Failed to create new events client with block events: %s", err)
 	}
-	if err := registerBlockEvent(ctx, channelID, eventClient, callBack, true); err != nil {
-		return err
+	reg, eventch, err := eventClient.RegisterBlockEvent()
+	if err != nil {
+		return errors.Errorf("Error registering for block events: %s", err)
 	}
+	go registerBlockEvent(ctx, channelID, eventClient, reg, eventch, callBack, true)
+
 	return nil
 }
 
@@ -346,9 +349,14 @@ func (f *FabSdkProvider) RegisterBlockEventRequest(ctx context.Context, channelI
 	if err != nil {
 		return errors.Errorf("Failed to create new events client with block events: %s", err)
 	}
-	if err := registerBlockEvent(ctx, channelID, eventClient, callBack, skipFirst); err != nil {
-		return err
+
+	reg, eventch, err := eventClient.RegisterBlockEvent()
+	if err != nil {
+		return errors.Errorf("Error registering for block events: %s", err)
 	}
+
+	go registerBlockEvent(ctx, channelID, eventClient, reg, eventch, callBack, skipFirst)
+
 	return nil
 }
 

@@ -9,7 +9,7 @@ import (
 
 	cb "github.com/hyperledger/fabric-protos-go/common"
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/event"
-	"github.com/pkg/errors"
+	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/fab"
 	"github.com/zhigui-projects/fabric-connector/protoutil"
 )
 
@@ -35,11 +35,7 @@ type TxData struct {
 
 type BlockEventWithTransaction func(*BlockData)
 
-func registerBlockEvent(ctx context.Context, channelID string, eventClient *event.Client, callBack BlockEventWithTransaction, skipFirst bool) error {
-	reg, eventch, err := eventClient.RegisterBlockEvent()
-	if err != nil {
-		return errors.Errorf("Error registering for block events: %s", err)
-	}
+func registerBlockEvent(ctx context.Context, channelID string, eventClient *event.Client, reg fab.Registration, eventch <-chan *fab.BlockEvent, callBack BlockEventWithTransaction, skipFirst bool) {
 	defer eventClient.Unregister(reg)
 
 	fmt.Printf("register block event succeed for %s\n", channelID)
@@ -59,7 +55,7 @@ func registerBlockEvent(ctx context.Context, channelID string, eventClient *even
 				go updateBlock(e.Block, callBack)
 			}
 		case <-ctx.Done():
-			return nil
+			return
 		}
 	}
 }
