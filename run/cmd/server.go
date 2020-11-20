@@ -37,6 +37,7 @@ type RsmqData struct {
 type ExtraData struct {
 	ConsortiumId string `json:"consortium_id"`
 	ChannelName  string `json:"channel_name"`
+	UserName     string `json:"username"`
 }
 
 func ServerCmd() *cobra.Command {
@@ -117,13 +118,14 @@ func StartServer() {
 }
 
 type RegisterInfo struct {
-	ConsortiumId   string `json:"consortium_id"`
-	ChannelId      string `json:"channel_id"`
-	OrgDomain      string `json:"org_domain"`
-	OrgId          string `json:"org_id"`
-	UserId         string `json:"user_id"`         // optional
-	ConnectionFile string `json:"connection_file"` // optional
-	BlockHeight    int64  `json:"block_height"`    // optional
+	ConsortiumId   string     `json:"consortium_id"`
+	ChannelId      string     `json:"channel_id"`
+	OrgDomain      string     `json:"org_domain"`
+	OrgId          string     `json:"org_id"`
+	UserId         string     `json:"user_id"`         // optional
+	ConnectionFile string     `json:"connection_file"` // optional
+	BlockHeight    int64      `json:"block_height"`    // optional
+	Extra          *ExtraData `json:"extra"`
 }
 
 type RegisterResp struct {
@@ -246,10 +248,7 @@ func BlockListener(reg *RegisterInfo) {
 			payload, err := json.Marshal(&RsmqData{
 				Action: "monitor_block",
 				Block:  data,
-				Extra: &ExtraData{
-					ConsortiumId: reg.ConsortiumId,
-					ChannelName:  reg.ChannelId,
-				},
+				Extra:  reg.Extra,
 			})
 			if err != nil {
 				log.Printf("block marshal failed, err: %v", err)
