@@ -1,4 +1,4 @@
-FROM library/golang AS build
+FROM golang:1.14.2 AS build
 
 MAINTAINER tailinzhang1993@gmail.com
 
