@@ -170,8 +170,8 @@ func registerBlockEvent(w http.ResponseWriter, r *http.Request) {
 
 	key := []byte(strings.Join([]string{info.ConsortiumId, info.ChannelId, RegisterSuffix}, "-"))
 
-	v, err := lvldb.Get(key)
-	if err == nil && len(v.([]byte)) != 0 {
+	v, err1 := lvldb.Get(key)
+	if err1 == nil && len(v.([]byte)) != 0 {
 		err = errors.New(fmt.Sprintf("block monitor event already registered for [%s]-[%s]",
 			string(key), string(v.([]byte))))
 		return
